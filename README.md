@@ -1,14 +1,13 @@
-# Raspbot Predictive Guardrail & Replay Lab
+# Raspbot Action Guardrail & Replay Lab
 
 A safety, prediction, and replay layer for ROS2 mobile robot command pipelines.
 
-This project builds an explicit software boundary around mobile-base commands.
-Starting from a Raspbot V2 control-chain study, it replaces ad-hoc action
-execution with typed action plans, validates proposed commands, estimates
-short-horizon risk, and records replayable episodes for debugging and analysis.
+This project implements an explicit software boundary around mobile-base
+commands. Starting from a Raspbot V2 control-chain study, it turns candidate
+actions into typed plans, validates them, predicts short-horizon risk, and
+records replayable episodes for debugging and analysis.
 
-The public contribution is not vendor demo code. It is an independently authored
-command pipeline:
+The core pipeline is:
 
 ```text
 typed action plan
@@ -19,7 +18,7 @@ typed action plan
 -> ROS2 /cmd_vel adapter boundary
 ```
 
-## Why This Exists
+## Engineering Question
 
 Many robot demos connect high-level behaviors directly to execution. That makes
 it hard to inspect whether a command is malformed, over-budget, under-observed,
@@ -30,6 +29,16 @@ This project asks a narrower engineering question:
 > Can a small, interpretable predictive layer reject unsafe or insufficiently
 > observed mobile-robot commands before they enter a ROS2 velocity-command
 > pipeline?
+
+## What It Does
+
+- Parses candidate robot actions into a typed action schema.
+- Applies static command checks such as duration and speed limits.
+- Predicts a short-horizon 2D trajectory from pose, scene, and candidate action.
+- Rejects commands that collide with obstacles or leave the configured bounds.
+- Marks decisions as `RISK_UNKNOWN` when required observation evidence is
+  missing.
+- Writes replayable JSON episodes and standalone HTML reports.
 
 ## Current Scope
 
@@ -49,6 +58,13 @@ Decisions are deliberately conservative:
 Each replay writes a JSON episode and a standalone HTML report with a 2D
 trajectory view, obstacle markers, final decision, and minimum predicted
 clearance where available.
+
+## Example Outputs
+
+- `reports/clear_drive.html`: an approved action in a simple room scenario.
+- `reports/collision_risk.html`: a rejected action with predicted obstacle risk.
+- `reports/unknown_scene.html`: a conservative `RISK_UNKNOWN` decision when
+  required scene evidence is missing.
 
 ## Quick Start
 
@@ -76,6 +92,20 @@ Run tests:
 python -m unittest discover tests
 ```
 
+## Repository Map
+
+- `src/raspbot_guardrail/actions.py`: typed action schema and plan parsing.
+- `src/raspbot_guardrail/policy.py`: static command validation.
+- `src/raspbot_guardrail/predictor.py`: deterministic short-horizon trajectory
+  and risk prediction.
+- `src/raspbot_guardrail/replay.py`: replay engine and episode generation.
+- `src/raspbot_guardrail/report.py`: standalone HTML report generation.
+- `src/raspbot_guardrail/backends/ros2_cmd_vel.py`: ROS2 `/cmd_vel` adapter
+  boundary.
+- `examples/`: replay inputs for safe, risky, and under-observed cases.
+- `docs/`: control-chain evidence, command policy, data model, and validation
+  notes.
+
 ## Evidence Labels
 
 Documentation uses explicit evidence labels:
@@ -87,7 +117,7 @@ Documentation uses explicit evidence labels:
 
 ## Raspbot Connection
 
-The Raspbot V2 command boundary studied earlier is:
+The Raspbot V2 command boundary behind this project is:
 
 ```text
 teleop/custom node
@@ -100,12 +130,13 @@ teleop/custom node
 This project uses `/cmd_vel` as the future ROS2 adapter contract while keeping
 the core package runnable as plain Python.
 
-## What This Is Not
+## Boundaries
 
-- Not a copy of Yahboom vendor source.
-- Not a physical safety certification.
-- Not a VLA, DQN, or large world-model training project.
-- Not a claim that normalized V1 commands are calibrated physical units.
+- V1 focuses on command-level guardrails, not full autonomy.
+- The predictor is deterministic and interpretable, not a learned world model.
+- Generated decisions are engineering checks, not formal safety certification.
+- Normalized V1 command values are not claimed as calibrated physical
+  velocities.
 
 ## Story
 

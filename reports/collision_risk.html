@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>collision_risk replay report</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 32px; line-height: 1.45; }
+    .panel { border: 1px solid #d0d0d0; padding: 16px; margin: 20px 0; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f2f2f2; }
+    code { background: #f6f6f6; padding: 2px 4px; }
+  </style>
+</head>
+<body>
+  <h1>collision_risk replay report</h1>
+  <p>Evidence label: <code>offline_simulated</code></p>
+  <p>Terminal stop event added: <code>True</code></p>
+  <section class="panel">
+    <h2>Predicted 2D Trajectory</h2>
+    <svg viewBox="0 0 640 360" width="640" height="360" role="img" aria-label="Predicted trajectory">
+<rect x="28" y="28" width="584" height="304" fill="#fff" stroke="#333" />
+<circle cx="466.0" cy="180.0" r="23.4" fill="#f8d7da" stroke="#b00020" />
+<circle cx="320.0" cy="180.0" r="5" fill="#111" />
+<text x="328.0" y="172.0" font-size="12">start</text>
+<polyline points="328.8,180.0 337.5,180.0 346.3,180.0 355.0,180.0 363.8,180.0 372.6,180.0 381.3,180.0 390.1,180.0 398.8,180.0" fill="none" stroke="#b00020" stroke-width="3" />
+<circle cx="398.8" cy="180.0" r="4" fill="#b00020" />
+<text x="28" y="350" font-size="12">Trajectory uses normalized V1 command units.</text>
+</svg>
+  </section>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Action</th>
+        <th>Static</th>
+        <th>Predictive</th>
+        <th>Final</th>
+        <th>Reason</th>
+        <th>Min clearance</th>
+      </tr>
+    </thead>
+    <tbody><tr><td>0</td><td>drive</td><td>APPROVED</td><td>REJECTED</td><td>REJECTED</td><td>predicted obstacle collision or low clearance</td><td>0.045</td></tr></tbody>
+  </table>
+</body>
+</html>

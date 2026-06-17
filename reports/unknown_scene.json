@@ -1,0 +1,29 @@
+{
+  "name": "unknown_scene",
+  "metadata": {
+    "stop_event_added": true,
+    "evidence_label": "offline_simulated",
+    "scene": {
+      "pose": null,
+      "bounds": {
+        "min_x": -1.5,
+        "max_x": 1.5,
+        "min_y": -1.0,
+        "max_y": 1.0
+      },
+      "obstacles": []
+    }
+  },
+  "events": [
+    {
+      "index": 0,
+      "action_type": "drive",
+      "static_decision": "APPROVED",
+      "predictive_decision": "RISK_UNKNOWN",
+      "final_decision": "RISK_UNKNOWN",
+      "reason": "pose or bounds missing",
+      "trajectory": [],
+      "min_clearance": null
+    }
+  ]
+}

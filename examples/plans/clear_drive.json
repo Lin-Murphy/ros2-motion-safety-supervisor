@@ -1,0 +1,18 @@
+{
+  "name": "clear_drive",
+  "actions": [
+    {
+      "type": "drive",
+      "command": {
+        "vx": 0.2,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 1.0
+      }
+    },
+    {
+      "type": "stop",
+      "duration_s": 0.2
+    }
+  ]
+}

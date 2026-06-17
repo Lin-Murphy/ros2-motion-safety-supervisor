@@ -1,0 +1,14 @@
+{
+  "name": "collision_risk",
+  "actions": [
+    {
+      "type": "drive",
+      "command": {
+        "vx": 0.45,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 2.0
+      }
+    }
+  ]
+}

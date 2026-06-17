@@ -1,0 +1,94 @@
+{
+  "name": "collision_risk",
+  "metadata": {
+    "stop_event_added": true,
+    "evidence_label": "offline_simulated",
+    "scene": {
+      "pose": {
+        "x": 0.0,
+        "y": 0.0,
+        "yaw": 0.0
+      },
+      "bounds": {
+        "min_x": -1.5,
+        "max_x": 1.5,
+        "min_y": -1.0,
+        "max_y": 1.0
+      },
+      "obstacles": [
+        {
+          "x": 0.75,
+          "y": 0.0,
+          "radius": 0.12
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "index": 0,
+      "action_type": "drive",
+      "static_decision": "APPROVED",
+      "predictive_decision": "REJECTED",
+      "final_decision": "REJECTED",
+      "reason": "predicted obstacle collision or low clearance",
+      "trajectory": [
+        {
+          "t": 0.1,
+          "x": 0.045000000000000005,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "t": 0.2,
+          "x": 0.09000000000000001,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "t": 0.30000000000000004,
+          "x": 0.135,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "t": 0.4,
+          "x": 0.18000000000000002,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "t": 0.5,
+          "x": 0.22500000000000003,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "t": 0.6,
+          "x": 0.27,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "t": 0.7,
+          "x": 0.315,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "t": 0.7999999999999999,
+          "x": 0.36,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        {
+          "t": 0.8999999999999999,
+          "x": 0.40499999999999997,
+          "y": 0.0,
+          "yaw": 0.0
+        }
+      ],
+      "min_clearance": 0.04500000000000004
+    }
+  ]
+}

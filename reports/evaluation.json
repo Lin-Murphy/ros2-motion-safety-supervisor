@@ -1,0 +1,67 @@
+{
+  "total": 5,
+  "passed": 5,
+  "pass_rate": 1.0,
+  "cases": [
+    {
+      "case_id": "clear_drive_safe",
+      "category": "safe_path",
+      "purpose": "A valid drive command stays clear of obstacles and within bounds.",
+      "expected_decision": "APPROVED",
+      "actual_decision": "APPROVED",
+      "static_decision": "APPROVED",
+      "predictive_decision": "APPROVED",
+      "reason": "predicted path stays within scene constraints",
+      "min_clearance": 0.25,
+      "passed": true
+    },
+    {
+      "case_id": "collision_risk_predictive_reject",
+      "category": "predictive_collision",
+      "purpose": "A command that passes static limits is rejected after trajectory prediction.",
+      "expected_decision": "REJECTED",
+      "actual_decision": "REJECTED",
+      "static_decision": "APPROVED",
+      "predictive_decision": "REJECTED",
+      "reason": "predicted obstacle collision or low clearance",
+      "min_clearance": 0.045,
+      "passed": true
+    },
+    {
+      "case_id": "missing_pose_unknown",
+      "category": "under_observed_scene",
+      "purpose": "A command cannot be risk-scored when pose evidence is missing.",
+      "expected_decision": "RISK_UNKNOWN",
+      "actual_decision": "RISK_UNKNOWN",
+      "static_decision": "APPROVED",
+      "predictive_decision": "RISK_UNKNOWN",
+      "reason": "pose or bounds missing",
+      "min_clearance": null,
+      "passed": true
+    },
+    {
+      "case_id": "stale_observation_unknown",
+      "category": "stale_observation",
+      "purpose": "A command is held when the scene observation is older than the configured limit.",
+      "expected_decision": "RISK_UNKNOWN",
+      "actual_decision": "RISK_UNKNOWN",
+      "static_decision": "APPROVED",
+      "predictive_decision": "RISK_UNKNOWN",
+      "reason": "scene observation stale or absent",
+      "min_clearance": null,
+      "passed": true
+    },
+    {
+      "case_id": "overspeed_static_reject",
+      "category": "static_limit",
+      "purpose": "A command above the configured velocity limit is rejected before prediction.",
+      "expected_decision": "REJECTED",
+      "actual_decision": "REJECTED",
+      "static_decision": "REJECTED",
+      "predictive_decision": "RISK_UNKNOWN",
+      "reason": "vx exceeds limit",
+      "min_clearance": null,
+      "passed": true
+    }
+  ]
+}

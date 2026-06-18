@@ -1,5 +1,5 @@
 [project]
-name = "raspbot-predictive-guardrail-lab"
+name = "raspbot-action-guardrail-lab"
 version = "0.1.0"
 description = "A safety, prediction, and replay layer for ROS2 mobile robot command pipelines."
 requires-python = ">=3.10"

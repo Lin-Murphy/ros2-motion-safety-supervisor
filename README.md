@@ -65,6 +65,8 @@ clearance where available.
 - `reports/collision_risk.html`: a rejected action with predicted obstacle risk.
 - `reports/unknown_scene.html`: a conservative `RISK_UNKNOWN` decision when
   required scene evidence is missing.
+- `reports/evaluation.md`: a compact pass/fail report for the V1 guardrail
+  case set.
 
 ## Quick Start
 
@@ -86,6 +88,12 @@ Run the red-team example:
 python -m raspbot_guardrail replay examples/plans/collision_risk.json examples/scenarios/simple_room.json --html reports/collision_risk.html
 ```
 
+Run the evaluation suite:
+
+```bash
+python -m raspbot_guardrail evaluate examples/evaluation_cases.json --json reports/evaluation.json --markdown reports/evaluation.md
+```
+
 Run tests:
 
 ```bash
@@ -98,6 +106,7 @@ python -m unittest discover tests
 - `src/raspbot_guardrail/policy.py`: static command validation.
 - `src/raspbot_guardrail/predictor.py`: deterministic short-horizon trajectory
   and risk prediction.
+- `src/raspbot_guardrail/evaluation.py`: manifest-driven evaluation harness.
 - `src/raspbot_guardrail/replay.py`: replay engine and episode generation.
 - `src/raspbot_guardrail/report.py`: standalone HTML report generation.
 - `src/raspbot_guardrail/backends/ros2_cmd_vel.py`: ROS2 `/cmd_vel` adapter
@@ -105,6 +114,16 @@ python -m unittest discover tests
 - `examples/`: replay inputs for safe, risky, and under-observed cases.
 - `docs/`: control-chain evidence, command policy, data model, and validation
   notes.
+
+## Validation Harness
+
+The evaluation manifest in `examples/evaluation_cases.json` checks V1 behaviour
+against safe, risky, and under-observed command cases. It reports expected
+versus actual decisions and records both static and predictive decisions.
+
+The most important red-team case is `collision_risk_predictive_reject`: the
+candidate action passes static limits, but the predicted trajectory crosses the
+obstacle clearance margin, so the predictive layer rejects it.
 
 ## Evidence Labels
 

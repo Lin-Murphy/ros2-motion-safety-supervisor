@@ -1,0 +1,45 @@
+{
+  "name": "v1_guardrail_evaluation",
+  "cases": [
+    {
+      "id": "clear_drive_safe",
+      "category": "safe_path",
+      "purpose": "A valid drive command stays clear of obstacles and within bounds.",
+      "plan": "plans/clear_drive.json",
+      "scenario": "scenarios/simple_room.json",
+      "expected_decision": "APPROVED"
+    },
+    {
+      "id": "collision_risk_predictive_reject",
+      "category": "predictive_collision",
+      "purpose": "A command that passes static limits is rejected after trajectory prediction.",
+      "plan": "plans/collision_risk.json",
+      "scenario": "scenarios/simple_room.json",
+      "expected_decision": "REJECTED"
+    },
+    {
+      "id": "missing_pose_unknown",
+      "category": "under_observed_scene",
+      "purpose": "A command cannot be risk-scored when pose evidence is missing.",
+      "plan": "plans/unknown_scene.json",
+      "scenario": "scenarios/missing_pose.json",
+      "expected_decision": "RISK_UNKNOWN"
+    },
+    {
+      "id": "stale_observation_unknown",
+      "category": "stale_observation",
+      "purpose": "A command is held when the scene observation is older than the configured limit.",
+      "plan": "plans/clear_drive.json",
+      "scenario": "scenarios/stale_observation.json",
+      "expected_decision": "RISK_UNKNOWN"
+    },
+    {
+      "id": "overspeed_static_reject",
+      "category": "static_limit",
+      "purpose": "A command above the configured velocity limit is rejected before prediction.",
+      "plan": "plans/overspeed.json",
+      "scenario": "scenarios/simple_room.json",
+      "expected_decision": "REJECTED"
+    }
+  ]
+}

@@ -1,6 +1,8 @@
 import unittest
+from pathlib import Path
 
 from raspbot_guardrail.actions import parse_plan
+from raspbot_guardrail.evaluation import run_evaluation
 from raspbot_guardrail.policy import Decision
 from raspbot_guardrail.replay import ReplayEngine
 from raspbot_guardrail.scenario import parse_scene
@@ -54,6 +56,18 @@ class GuardrailTests(unittest.TestCase):
         result = ReplayEngine().run("unknown", actions, scene)
         self.assertEqual(result.final_decision, Decision.RISK_UNKNOWN)
         self.assertEqual(result.episode.events[0].trajectory, [])
+
+    def test_evaluation_manifest_passes(self) -> None:
+        summary = run_evaluation(Path("examples/evaluation_cases.json"))
+        self.assertEqual(summary.total, 5)
+        self.assertEqual(summary.passed, 5)
+
+        collision_case = next(
+            case for case in summary.cases
+            if case.case_id == "collision_risk_predictive_reject"
+        )
+        self.assertEqual(collision_case.static_decision, Decision.APPROVED.value)
+        self.assertEqual(collision_case.predictive_decision, Decision.REJECTED.value)
 
 
 if __name__ == "__main__":

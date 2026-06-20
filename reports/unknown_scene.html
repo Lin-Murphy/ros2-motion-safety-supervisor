@@ -10,6 +10,7 @@
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background: #f2f2f2; }
     code { background: #f6f6f6; padding: 2px 4px; }
+    pre { background: #f6f6f6; padding: 12px; overflow-x: auto; }
   </style>
 </head>
 <body>
@@ -22,6 +23,45 @@
 <rect x="28" y="28" width="584" height="304" fill="#fff" stroke="#333" />
 <text x="28" y="350" font-size="12">Trajectory uses normalized V1 command units.</text>
 </svg>
+  </section>
+  <section class="panel">
+    <h2>Prediction Trace</h2>
+    <h3>Event #0: drive</h3>
+<pre>{
+  &quot;model&quot;: &quot;kinematic_unicycle_v1&quot;,
+  &quot;command_units&quot;: &quot;normalized_v1&quot;,
+  &quot;dt_s&quot;: 0.1,
+  &quot;steps&quot;: null,
+  &quot;robot_radius&quot;: 0.18,
+  &quot;clearance_margin&quot;: 0.05,
+  &quot;risk_trigger&quot;: &quot;missing_pose_or_bounds&quot;,
+  &quot;equations&quot;: [
+    &quot;x_next = x + dt * (vx * cos(yaw) - vy * sin(yaw))&quot;,
+    &quot;y_next = y + dt * (vx * sin(yaw) + vy * cos(yaw))&quot;,
+    &quot;yaw_next = yaw + dt * wz&quot;,
+    &quot;clearance = distance(predicted_point, obstacle_center) - obstacle_radius - robot_radius&quot;
+  ],
+  &quot;checks&quot;: [
+    &quot;predicted point remains inside configured bounds&quot;,
+    &quot;minimum obstacle clearance stays above clearance_margin&quot;,
+    &quot;pose and scene observation are present and fresh&quot;
+  ],
+  &quot;scene_evidence&quot;: {
+    &quot;pose_present&quot;: false,
+    &quot;bounds_present&quot;: true,
+    &quot;obstacle_count&quot;: 0,
+    &quot;observation_age_s&quot;: 0.1,
+    &quot;max_observation_age_s&quot;: 1.0
+  },
+  &quot;input_action&quot;: {
+    &quot;type&quot;: &quot;drive&quot;,
+    &quot;vx&quot;: 0.2,
+    &quot;vy&quot;: 0.0,
+    &quot;wz&quot;: 0.0,
+    &quot;duration_s&quot;: 1.0
+  },
+  &quot;horizon_s&quot;: null
+}</pre>
   </section>
   <table>
     <thead>

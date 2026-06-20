@@ -18,6 +18,7 @@ class ReplayEvent:
     reason: str
     trajectory: list[dict[str, float]]
     min_clearance: float | None
+    model_trace: dict[str, Any]
 
 
 @dataclass(frozen=True)

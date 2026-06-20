@@ -24,6 +24,8 @@ class GuardrailTests(unittest.TestCase):
         result = ReplayEngine().run("clear", actions, scene)
         self.assertEqual(result.final_decision, Decision.APPROVED)
         self.assertGreater(len(result.episode.events[0].trajectory), 0)
+        self.assertEqual(result.episode.events[0].model_trace["model"], "kinematic_unicycle_v1")
+        self.assertIn("equations", result.episode.events[0].model_trace)
 
     def test_collision_risk_is_rejected(self) -> None:
         actions = parse_plan({
@@ -40,6 +42,7 @@ class GuardrailTests(unittest.TestCase):
         result = ReplayEngine().run("collision", actions, scene)
         self.assertEqual(result.final_decision, Decision.REJECTED)
         self.assertIsNotNone(result.episode.events[0].min_clearance)
+        self.assertEqual(result.episode.events[0].model_trace["risk_trigger"], "clearance_below_margin")
 
     def test_missing_pose_is_unknown(self) -> None:
         actions = parse_plan({

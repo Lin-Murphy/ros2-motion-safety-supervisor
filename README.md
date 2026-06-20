@@ -38,7 +38,8 @@ This project asks a narrower engineering question:
 - Rejects commands that collide with obstacles or leave the configured bounds.
 - Marks decisions as `RISK_UNKNOWN` when required observation evidence is
   missing.
-- Writes replayable JSON episodes and standalone HTML reports.
+- Writes replayable JSON episodes, prediction traces, and standalone HTML
+  reports.
 
 ## Current Scope
 
@@ -114,6 +115,8 @@ python -m unittest discover tests
 - `examples/`: replay inputs for safe, risky, and under-observed cases.
 - `docs/`: control-chain evidence, command policy, data model, and validation
   notes.
+- `docs/prediction-model.md`: the V1 rollout equations, clearance check, and
+  trace output.
 
 ## Validation Harness
 

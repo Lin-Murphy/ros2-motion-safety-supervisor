@@ -88,7 +88,42 @@
           "yaw": 0.0
         }
       ],
-      "min_clearance": 0.04500000000000004
+      "min_clearance": 0.04500000000000004,
+      "model_trace": {
+        "model": "kinematic_unicycle_v1",
+        "command_units": "normalized_v1",
+        "dt_s": 0.1,
+        "steps": 20,
+        "robot_radius": 0.18,
+        "clearance_margin": 0.05,
+        "risk_trigger": "clearance_below_margin",
+        "equations": [
+          "x_next = x + dt * (vx * cos(yaw) - vy * sin(yaw))",
+          "y_next = y + dt * (vx * sin(yaw) + vy * cos(yaw))",
+          "yaw_next = yaw + dt * wz",
+          "clearance = distance(predicted_point, obstacle_center) - obstacle_radius - robot_radius"
+        ],
+        "checks": [
+          "predicted point remains inside configured bounds",
+          "minimum obstacle clearance stays above clearance_margin",
+          "pose and scene observation are present and fresh"
+        ],
+        "scene_evidence": {
+          "pose_present": true,
+          "bounds_present": true,
+          "obstacle_count": 1,
+          "observation_age_s": 0.1,
+          "max_observation_age_s": 1.0
+        },
+        "input_action": {
+          "type": "drive",
+          "vx": 0.45,
+          "vy": 0.0,
+          "wz": 0.0,
+          "duration_s": 2.0
+        },
+        "horizon_s": 2.0
+      }
     }
   ]
 }

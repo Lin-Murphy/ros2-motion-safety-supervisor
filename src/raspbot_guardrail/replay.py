@@ -25,7 +25,7 @@ class ReplayEngine:
         events: list[ReplayEvent] = []
         budget = self.policy.validate_plan_budget(actions)
         if budget.decision != Decision.APPROVED:
-            event = ReplayEvent(0, "plan", budget.decision.value, Decision.RISK_UNKNOWN.value, budget.decision.value, budget.reason, [], None)
+            event = ReplayEvent(0, "plan", budget.decision.value, Decision.RISK_UNKNOWN.value, budget.decision.value, budget.reason, [], None, {})
             return ReplayResult(Episode(name, [event], self._metadata(scene)), budget.decision)
 
         final = Decision.APPROVED
@@ -33,7 +33,7 @@ class ReplayEngine:
             static = self.policy.validate_action(action)
             if static.decision != Decision.APPROVED:
                 final = static.decision
-                events.append(ReplayEvent(index, action.action_type, static.decision.value, Decision.RISK_UNKNOWN.value, final.value, static.reason, [], None))
+                events.append(ReplayEvent(index, action.action_type, static.decision.value, Decision.RISK_UNKNOWN.value, final.value, static.reason, [], None, {}))
                 break
 
             predicted = self.predictor.predict(scene, action)
@@ -52,6 +52,7 @@ class ReplayEngine:
                     reason=predicted.reason,
                     trajectory=trajectory,
                     min_clearance=predicted.min_clearance,
+                    model_trace=predicted.model_trace,
                 )
             )
             if final != Decision.APPROVED:

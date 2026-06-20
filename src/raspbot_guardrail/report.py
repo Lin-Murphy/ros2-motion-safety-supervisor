@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from html import escape
+from json import dumps
 from pathlib import Path
 
 from .episode import Episode
@@ -11,6 +12,7 @@ from .episode import Episode
 def write_html_report(path: Path, episode: Episode) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     trajectory_svg = _render_trajectory_svg(episode)
+    trace_html = _render_prediction_trace(episode)
     rows = "\n".join(
         "<tr>"
         f"<td>{event.index}</td>"
@@ -35,6 +37,7 @@ def write_html_report(path: Path, episode: Episode) -> None:
     th, td {{ border: 1px solid #ccc; padding: 8px; text-align: left; }}
     th {{ background: #f2f2f2; }}
     code {{ background: #f6f6f6; padding: 2px 4px; }}
+    pre {{ background: #f6f6f6; padding: 12px; overflow-x: auto; }}
   </style>
 </head>
 <body>
@@ -44,6 +47,10 @@ def write_html_report(path: Path, episode: Episode) -> None:
   <section class="panel">
     <h2>Predicted 2D Trajectory</h2>
     {trajectory_svg}
+  </section>
+  <section class="panel">
+    <h2>Prediction Trace</h2>
+    {trace_html}
   </section>
   <table>
     <thead>
@@ -121,3 +128,16 @@ def _render_trajectory_svg(episode: Episode) -> str:
     shapes.append('<text x="28" y="350" font-size="12">Trajectory uses normalized V1 command units.</text>')
     shapes.append("</svg>")
     return "\n".join(shapes)
+
+
+def _render_prediction_trace(episode: Episode) -> str:
+    chunks: list[str] = []
+    for event in episode.events:
+        if not event.model_trace:
+            continue
+        trace = dumps(event.model_trace, indent=2)
+        chunks.append(f"<h3>Event #{event.index}: {escape(event.action_type)}</h3>")
+        chunks.append(f"<pre>{escape(trace)}</pre>")
+    if not chunks:
+        return "<p>No predictive model trace was recorded for this episode.</p>"
+    return "\n".join(chunks)

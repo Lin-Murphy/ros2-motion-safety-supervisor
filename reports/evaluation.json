@@ -1,4 +1,5 @@
 {
+  "predictor": "kinematic",
   "total": 5,
   "passed": 5,
   "pass_rate": 1.0,

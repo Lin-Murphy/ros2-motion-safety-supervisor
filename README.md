@@ -12,7 +12,7 @@ The core pipeline is:
 ```text
 typed action plan
 -> static validation
--> short-horizon risk prediction
+-> pluggable prediction model
 -> guardrail decision
 -> replay log
 -> ROS2 /cmd_vel adapter boundary
@@ -107,6 +107,8 @@ python -m unittest discover tests
 - `src/raspbot_guardrail/policy.py`: static command validation.
 - `src/raspbot_guardrail/predictor.py`: deterministic short-horizon trajectory
   and risk prediction.
+- `src/raspbot_guardrail/predictors/`: predictor interface and registry for
+  future learned/world-model predictors.
 - `src/raspbot_guardrail/evaluation.py`: manifest-driven evaluation harness.
 - `src/raspbot_guardrail/replay.py`: replay engine and episode generation.
 - `src/raspbot_guardrail/report.py`: standalone HTML report generation.
@@ -117,6 +119,8 @@ python -m unittest discover tests
   notes.
 - `docs/prediction-model.md`: the V1 rollout equations, clearance check, and
   trace output.
+- `docs/model-integration.md`: predictor registry, learned-risk extension, and
+  future world-model integration boundary.
 
 ## Validation Harness
 
@@ -127,6 +131,13 @@ versus actual decisions and records both static and predictive decisions.
 The most important red-team case is `collision_risk_predictive_reject`: the
 candidate action passes static limits, but the predicted trajectory crosses the
 obstacle clearance margin, so the predictive layer rejects it.
+
+## Model Integration
+
+The prediction layer is model-pluggable. V1 registers an interpretable
+`kinematic` predictor, and the same replay/evaluation path can later run a
+learned risk predictor or action-conditioned world model behind the same
+`predict(scene, action)` interface.
 
 ## Evidence Labels
 

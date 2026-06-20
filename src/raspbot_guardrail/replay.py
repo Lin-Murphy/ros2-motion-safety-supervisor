@@ -7,7 +7,9 @@ from dataclasses import dataclass
 from .actions import TypedAction
 from .episode import Episode, ReplayEvent
 from .policy import Decision, StaticPolicy
-from .predictor import KinematicRiskPredictor, Scene
+from .predictor import Scene
+from .predictors.base import Predictor
+from .predictors.registry import build_predictor
 
 
 @dataclass(frozen=True)
@@ -17,9 +19,15 @@ class ReplayResult:
 
 
 class ReplayEngine:
-    def __init__(self, policy: StaticPolicy | None = None, predictor: KinematicRiskPredictor | None = None) -> None:
+    def __init__(
+        self,
+        policy: StaticPolicy | None = None,
+        predictor: Predictor | None = None,
+        predictor_name: str | None = None,
+    ) -> None:
         self.policy = policy or StaticPolicy()
-        self.predictor = predictor or KinematicRiskPredictor()
+        self.predictor = predictor or build_predictor("kinematic")
+        self.predictor_name = predictor_name or ("custom" if predictor is not None else "kinematic")
 
     def run(self, name: str, actions: list[TypedAction], scene: Scene) -> ReplayResult:
         events: list[ReplayEvent] = []
@@ -64,6 +72,7 @@ class ReplayEngine:
         metadata = {
             "stop_event_added": True,
             "evidence_label": "offline_simulated",
+            "predictor": self.predictor_name,
             "scene": {
                 "pose": None if scene.pose is None else {"x": scene.pose.x, "y": scene.pose.y, "yaw": scene.pose.yaw},
                 "bounds": None if scene.bounds is None else {

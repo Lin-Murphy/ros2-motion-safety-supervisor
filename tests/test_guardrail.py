@@ -4,6 +4,7 @@ from pathlib import Path
 from raspbot_guardrail.actions import parse_plan
 from raspbot_guardrail.evaluation import run_evaluation
 from raspbot_guardrail.policy import Decision
+from raspbot_guardrail.predictors.registry import available_predictors, build_predictor
 from raspbot_guardrail.replay import ReplayEngine
 from raspbot_guardrail.scenario import parse_scene
 
@@ -23,6 +24,7 @@ class GuardrailTests(unittest.TestCase):
         })
         result = ReplayEngine().run("clear", actions, scene)
         self.assertEqual(result.final_decision, Decision.APPROVED)
+        self.assertEqual(result.episode.metadata["predictor"], "kinematic")
         self.assertGreater(len(result.episode.events[0].trajectory), 0)
         self.assertEqual(result.episode.events[0].model_trace["model"], "kinematic_unicycle_v1")
         self.assertIn("equations", result.episode.events[0].model_trace)
@@ -62,6 +64,7 @@ class GuardrailTests(unittest.TestCase):
 
     def test_evaluation_manifest_passes(self) -> None:
         summary = run_evaluation(Path("examples/evaluation_cases.json"))
+        self.assertEqual(summary.predictor, "kinematic")
         self.assertEqual(summary.total, 5)
         self.assertEqual(summary.passed, 5)
 
@@ -71,6 +74,11 @@ class GuardrailTests(unittest.TestCase):
         )
         self.assertEqual(collision_case.static_decision, Decision.APPROVED.value)
         self.assertEqual(collision_case.predictive_decision, Decision.REJECTED.value)
+
+    def test_predictor_registry_builds_kinematic_predictor(self) -> None:
+        self.assertIn("kinematic", available_predictors())
+        predictor = build_predictor("kinematic")
+        self.assertEqual(type(predictor).__name__, "KinematicRiskPredictor")
 
 
 if __name__ == "__main__":

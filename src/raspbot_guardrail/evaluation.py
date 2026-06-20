@@ -40,6 +40,7 @@ class EvaluationCaseResult:
 
 @dataclass(frozen=True)
 class EvaluationSummary:
+    predictor: str
     total: int
     passed: int
     pass_rate: float
@@ -47,6 +48,7 @@ class EvaluationSummary:
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "predictor": self.predictor,
             "total": self.total,
             "passed": self.passed,
             "pass_rate": self.pass_rate,
@@ -95,7 +97,8 @@ def run_evaluation(manifest_path: Path, engine: ReplayEngine | None = None) -> E
     passed_count = sum(1 for result in results if result.passed)
     total = len(results)
     pass_rate = 0.0 if total == 0 else passed_count / total
-    return EvaluationSummary(total=total, passed=passed_count, pass_rate=pass_rate, cases=results)
+    predictor_name = getattr(replay_engine, "predictor_name", "unknown")
+    return EvaluationSummary(predictor=predictor_name, total=total, passed=passed_count, pass_rate=pass_rate, cases=results)
 
 
 def write_evaluation_json(path: Path, summary: EvaluationSummary) -> None:
@@ -108,6 +111,7 @@ def write_evaluation_markdown(path: Path, summary: EvaluationSummary) -> None:
     lines = [
         "# Guardrail Evaluation Report",
         "",
+        f"- Predictor: {summary.predictor}",
         f"- Cases: {summary.total}",
         f"- Passed: {summary.passed}",
         f"- Pass rate: {summary.pass_rate:.0%}",

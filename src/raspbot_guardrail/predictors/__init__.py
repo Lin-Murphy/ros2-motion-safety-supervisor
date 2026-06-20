@@ -1,0 +1,2 @@
+"""Predictor registry package."""
+

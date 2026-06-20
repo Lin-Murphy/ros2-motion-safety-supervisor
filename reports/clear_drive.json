@@ -3,6 +3,7 @@
   "metadata": {
     "stop_event_added": true,
     "evidence_label": "offline_simulated",
+    "predictor": "kinematic",
     "scene": {
       "pose": {
         "x": 0.0,

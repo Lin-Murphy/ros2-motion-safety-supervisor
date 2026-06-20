@@ -9,5 +9,6 @@
 | The V1 predictor can reject collision-risk replay examples. | `offline_simulated` | Covered by examples and tests. |
 | The V1 guardrail can be evaluated across safe, static-limit, predictive-risk, and under-observed cases. | `offline_simulated` | Covered by `examples/evaluation_cases.json` and `reports/evaluation.md`. |
 | Replay episodes expose the predictor assumptions and risk trigger. | `offline_simulated` | Covered by `model_trace` in replay JSON and HTML reports. |
+| The prediction layer is model-pluggable. | `offline_simulated` | Covered by the predictor interface, registry, and CLI `--predictor kinematic` option. |
 | The ROS2 backend can drive a physical Raspbot. | `integration_pending` | Adapter boundary only in V1. |
 | Normalized V1 command values are calibrated physical velocities. | `integration_pending` | Not claimed. |

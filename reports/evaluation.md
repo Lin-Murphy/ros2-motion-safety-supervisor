@@ -1,5 +1,6 @@
 # Guardrail Evaluation Report
 
+- Predictor: kinematic
 - Cases: 5
 - Passed: 5
 - Pass rate: 100%

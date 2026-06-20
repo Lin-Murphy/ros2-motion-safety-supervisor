@@ -1,6 +1,6 @@
-# Raspbot Action Guardrail & Replay Lab
+# Raspbot Action Guardrail
 
-A safety, prediction, and replay layer for ROS2 mobile robot command pipelines.
+A replay and evaluation pipeline for ROS2 mobile robot command safety.
 
 This project implements an explicit software boundary around mobile-base
 commands. Starting from a Raspbot V2 control-chain study, it turns candidate

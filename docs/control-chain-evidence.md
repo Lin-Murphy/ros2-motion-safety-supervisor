@@ -51,6 +51,7 @@ validated, auditable, and conservative before any robot command is emitted.
 
 `integration_pending`
 
-This repository keeps the ROS2 backend isolated. The V1 core validates and
-replays commands as plain Python. A future adapter can map an approved
-`DriveAction` to a ROS2 `geometry_msgs/msg/Twist`.
+This repository keeps the ROS2 backend isolated and generic. The V1 core
+validates and replays commands as plain Python, then can dry-run approved
+`DriveAction` values as `/cmd_vel`-style `TwistCommand` records. A future live
+adapter can publish those records as ROS2 `geometry_msgs/msg/Twist` messages.

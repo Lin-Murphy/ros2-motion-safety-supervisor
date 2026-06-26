@@ -3,6 +3,7 @@ from pathlib import Path
 
 from raspbot_guardrail.actions import parse_plan
 from raspbot_guardrail.evaluation import run_evaluation
+from raspbot_guardrail.execution import GuardedCmdVelExecutor
 from raspbot_guardrail.policy import Decision
 from raspbot_guardrail.predictors.registry import available_predictors, build_predictor
 from raspbot_guardrail.replay import ReplayEngine
@@ -79,6 +80,61 @@ class GuardrailTests(unittest.TestCase):
         self.assertIn("kinematic", available_predictors())
         predictor = build_predictor("kinematic")
         self.assertEqual(type(predictor).__name__, "KinematicRiskPredictor")
+
+    def test_guarded_cmd_vel_dry_run_publishes_approved_drive_and_stop(self) -> None:
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.2, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}}
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": -0.8, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [{"x": 1.0, "y": 0.7, "radius": 0.1}],
+        })
+        result = GuardedCmdVelExecutor().execute("dry_run_clear", actions, scene)
+        self.assertEqual(result.decision, Decision.APPROVED)
+        self.assertEqual(len(result.published_commands), 2)
+        self.assertEqual(result.published_commands[0].topic, "/cmd_vel")
+        self.assertEqual(result.published_commands[0].linear_x, 0.2)
+        self.assertEqual(result.published_commands[-1].linear_x, 0.0)
+
+    def test_guarded_cmd_vel_dry_run_holds_rejected_action(self) -> None:
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.45, "vy": 0.0, "wz": 0.0, "duration_s": 2.0}}
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [{"x": 0.75, "y": 0.0, "radius": 0.12}],
+        })
+        result = GuardedCmdVelExecutor().execute("dry_run_collision", actions, scene)
+        self.assertEqual(result.decision, Decision.REJECTED)
+        self.assertEqual(len(result.published_commands), 1)
+        self.assertEqual(result.published_commands[0].linear_x, 0.0)
+        self.assertEqual(result.published_commands[0].angular_z, 0.0)
+
+    def test_guarded_cmd_vel_dry_run_does_not_duplicate_existing_stop(self) -> None:
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.2, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}},
+                {"type": "stop", "duration_s": 0.2},
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": -0.8, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [{"x": 1.0, "y": 0.7, "radius": 0.1}],
+        })
+        result = GuardedCmdVelExecutor().execute("dry_run_clear_with_stop", actions, scene)
+        self.assertEqual(result.decision, Decision.APPROVED)
+        self.assertEqual(len(result.published_commands), 2)
+        self.assertEqual(result.reason, "all actions approved; commands emitted to dry-run cmd_vel backend")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,48 @@
+{
+  "decision": "APPROVED",
+  "reason": "all actions approved; commands emitted to dry-run cmd_vel backend",
+  "backend": "dry_run_cmd_vel",
+  "topic": "/cmd_vel",
+  "published_commands": [
+    {
+      "topic": "/cmd_vel",
+      "linear_x": 0.2,
+      "linear_y": 0.0,
+      "angular_z": 0.0,
+      "duration_s": 1.0
+    },
+    {
+      "topic": "/cmd_vel",
+      "linear_x": 0.0,
+      "linear_y": 0.0,
+      "angular_z": 0.0,
+      "duration_s": 0.2
+    }
+  ],
+  "guardrail": {
+    "name": "clear_drive",
+    "predictor": "kinematic",
+    "events": [
+      {
+        "index": 0,
+        "action_type": "drive",
+        "static_decision": "APPROVED",
+        "predictive_decision": "APPROVED",
+        "final_decision": "APPROVED",
+        "reason": "predicted path stays within scene constraints",
+        "min_clearance": 0.25,
+        "risk_trigger": null
+      },
+      {
+        "index": 1,
+        "action_type": "stop",
+        "static_decision": "APPROVED",
+        "predictive_decision": "APPROVED",
+        "final_decision": "APPROVED",
+        "reason": "non-drive action has no motion risk",
+        "min_clearance": null,
+        "risk_trigger": null
+      }
+    ]
+  }
+}

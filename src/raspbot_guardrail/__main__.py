@@ -8,6 +8,7 @@ from pathlib import Path
 from .actions import parse_plan
 from .episode import read_json, write_episode
 from .evaluation import run_evaluation, write_evaluation_json, write_evaluation_markdown
+from .execution import GuardedCmdVelExecutor, write_execution_json
 from .predictors.registry import available_predictors, build_predictor
 from .replay import ReplayEngine
 from .report import write_html_report
@@ -30,6 +31,13 @@ def main() -> None:
     evaluate.add_argument("--json", type=Path, default=Path("reports/evaluation.json"))
     evaluate.add_argument("--markdown", type=Path, default=Path("reports/evaluation.md"))
     evaluate.add_argument("--predictor", choices=available_predictors(), default="kinematic")
+
+    dry_run = sub.add_parser("dry-run", help="run guardrail and emit generic ROS2 cmd_vel commands")
+    dry_run.add_argument("plan", type=Path)
+    dry_run.add_argument("scenario", type=Path)
+    dry_run.add_argument("--predictor", choices=available_predictors(), default="kinematic")
+    dry_run.add_argument("--topic", default="/cmd_vel")
+    dry_run.add_argument("--output", type=Path, default=Path("reports/cmd_vel_dry_run.json"))
 
     args = parser.parse_args()
     if args.command == "replay":
@@ -55,6 +63,18 @@ def main() -> None:
         print(f"markdown={args.markdown}")
         if summary.passed != summary.total:
             raise SystemExit(1)
+    elif args.command == "dry-run":
+        actions = parse_plan(read_json(args.plan))
+        scene = parse_scene(read_json(args.scenario))
+        engine = ReplayEngine(predictor=build_predictor(args.predictor), predictor_name=args.predictor)
+        executor = GuardedCmdVelExecutor(engine=engine, topic=args.topic)
+        result = executor.execute(args.plan.stem, actions, scene)
+        write_execution_json(args.output, result)
+        print(f"final_decision={result.decision.value}")
+        print(f"predictor={args.predictor}")
+        print(f"topic={result.topic}")
+        print(f"published_commands={len(result.published_commands)}")
+        print(f"output={args.output}")
 
 
 if __name__ == "__main__":

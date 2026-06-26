@@ -1,0 +1,31 @@
+{
+  "decision": "REJECTED",
+  "reason": "predicted obstacle collision or low clearance",
+  "backend": "dry_run_cmd_vel",
+  "topic": "/cmd_vel",
+  "published_commands": [
+    {
+      "topic": "/cmd_vel",
+      "linear_x": 0.0,
+      "linear_y": 0.0,
+      "angular_z": 0.0,
+      "duration_s": 0.2
+    }
+  ],
+  "guardrail": {
+    "name": "collision_risk",
+    "predictor": "kinematic",
+    "events": [
+      {
+        "index": 0,
+        "action_type": "drive",
+        "static_decision": "APPROVED",
+        "predictive_decision": "REJECTED",
+        "final_decision": "REJECTED",
+        "reason": "predicted obstacle collision or low clearance",
+        "min_clearance": 0.045,
+        "risk_trigger": "clearance_below_margin"
+      }
+    ]
+  }
+}

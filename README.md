@@ -15,7 +15,7 @@ typed action plan
 -> pluggable prediction model
 -> guardrail decision
 -> replay log
--> ROS2 /cmd_vel adapter boundary
+-> generic ROS2 /cmd_vel adapter boundary
 ```
 
 ## Engineering Question
@@ -38,6 +38,7 @@ This project asks a narrower engineering question:
 - Rejects commands that collide with obstacles or leave the configured bounds.
 - Marks decisions as `RISK_UNKNOWN` when required observation evidence is
   missing.
+- Converts approved actions to generic `/cmd_vel`-style dry-run commands.
 - Writes replayable JSON episodes, prediction traces, and standalone HTML
   reports.
 
@@ -68,6 +69,10 @@ clearance where available.
   required scene evidence is missing.
 - `reports/evaluation.md`: a compact pass/fail report for the V1 guardrail
   case set.
+- `reports/clear_drive_cmd_vel_dry_run.json`: generic `/cmd_vel` dry-run output
+  for an approved action sequence.
+- `reports/collision_risk_cmd_vel_dry_run.json`: generic `/cmd_vel` dry-run
+  output for a rejected action sequence.
 
 ## Quick Start
 
@@ -95,6 +100,12 @@ Run the evaluation suite:
 python -m raspbot_guardrail evaluate examples/evaluation_cases.json --json reports/evaluation.json --markdown reports/evaluation.md
 ```
 
+Run a generic ROS2 `/cmd_vel` dry run:
+
+```bash
+python -m raspbot_guardrail dry-run examples/plans/clear_drive.json examples/scenarios/simple_room.json --output reports/clear_drive_cmd_vel_dry_run.json
+```
+
 Run tests:
 
 ```bash
@@ -110,6 +121,8 @@ python -m unittest discover tests
 - `src/raspbot_guardrail/predictors/`: predictor interface and registry for
   future learned/world-model predictors.
 - `src/raspbot_guardrail/evaluation.py`: manifest-driven evaluation harness.
+- `src/raspbot_guardrail/execution.py`: guarded executor for generic ROS2
+  `/cmd_vel` dry runs.
 - `src/raspbot_guardrail/replay.py`: replay engine and episode generation.
 - `src/raspbot_guardrail/report.py`: standalone HTML report generation.
 - `src/raspbot_guardrail/backends/ros2_cmd_vel.py`: ROS2 `/cmd_vel` adapter
@@ -121,6 +134,7 @@ python -m unittest discover tests
   trace output.
 - `docs/model-integration.md`: predictor registry, learned-risk extension, and
   future world-model integration boundary.
+- `docs/ros2-cmd-vel-contract.md`: generic ROS2 mobile-base command boundary.
 
 ## Validation Harness
 
@@ -160,13 +174,14 @@ teleop/custom node
 -> wheels
 ```
 
-This project uses `/cmd_vel` as the future ROS2 adapter contract while keeping
-the core package runnable as plain Python.
+This project uses `/cmd_vel` as a generic ROS2 mobile-base adapter contract
+while keeping the core package runnable as plain Python.
 
 ## Boundaries
 
 - V1 focuses on command-level guardrails, not full autonomy.
 - The predictor is deterministic and interpretable, not a learned world model.
+- V1 dry-run output does not publish live ROS2 topics.
 - Generated decisions are engineering checks, not formal safety certification.
 - Normalized V1 command values are not claimed as calibrated physical
   velocities.

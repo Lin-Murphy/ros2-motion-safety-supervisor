@@ -11,5 +11,6 @@
 | Replay episodes expose the predictor assumptions and risk trigger. | `offline_simulated` | Covered by `model_trace` in replay JSON and HTML reports. |
 | The prediction layer is model-pluggable. | `offline_simulated` | Covered by the predictor interface, registry, and CLI `--predictor kinematic` option. |
 | Approved actions can be converted into generic `/cmd_vel`-style dry-run commands. | `offline_simulated` | Covered by `GuardedCmdVelExecutor`, dry-run reports, and tests. |
+| Guardrail decisions can be explained as a staged decision path. | `offline_simulated` | Covered by `decision_path`, HTML reports, `explain` CLI, and tests. |
 | The ROS2 backend can drive a physical Raspbot. | `integration_pending` | Adapter boundary only in V1. |
 | Normalized V1 command values are calibrated physical velocities. | `integration_pending` | Not claimed. |

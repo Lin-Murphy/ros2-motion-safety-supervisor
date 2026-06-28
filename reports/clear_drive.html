@@ -32,6 +32,21 @@
 </svg>
   </section>
   <section class="panel">
+    <h2>Decision Path</h2>
+    <h3>Event #0: drive</h3>
+<ol>
+<li><strong>static_policy</strong>: <code>APPROVED</code> - static drive policy passed</li>
+<li><strong>prediction</strong>: <code>APPROVED</code> - predicted path stays within scene constraints</li>
+<li><strong>final</strong>: <code>APPROVED</code> - predicted path stays within scene constraints</li>
+</ol>
+<h3>Event #1: stop</h3>
+<ol>
+<li><strong>static_policy</strong>: <code>APPROVED</code> - static non-drive policy passed</li>
+<li><strong>prediction</strong>: <code>APPROVED</code> - non-drive action has no motion risk</li>
+<li><strong>final</strong>: <code>APPROVED</code> - non-drive action has no motion risk</li>
+</ol>
+  </section>
+  <section class="panel">
     <h2>Prediction Trace</h2>
     <h3>Event #0: drive</h3>
 <pre>{

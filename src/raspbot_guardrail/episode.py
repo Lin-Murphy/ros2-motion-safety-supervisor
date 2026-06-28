@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +19,7 @@ class ReplayEvent:
     trajectory: list[dict[str, float]]
     min_clearance: float | None
     model_trace: dict[str, Any]
+    decision_path: list[dict[str, str]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

@@ -73,6 +73,8 @@ clearance where available.
   for an approved action sequence.
 - `reports/collision_risk_cmd_vel_dry_run.json`: generic `/cmd_vel` dry-run
   output for a rejected action sequence.
+- `reports/collision_risk_explain.md`: human-readable decision path for the
+  collision-risk case.
 
 ## Quick Start
 
@@ -106,6 +108,12 @@ Run a generic ROS2 `/cmd_vel` dry run:
 python -m raspbot_guardrail dry-run examples/plans/clear_drive.json examples/scenarios/simple_room.json --output reports/clear_drive_cmd_vel_dry_run.json
 ```
 
+Explain a guardrail decision:
+
+```bash
+python -m raspbot_guardrail explain examples/plans/collision_risk.json examples/scenarios/simple_room.json --predictor kinematic --output reports/collision_risk_explain.md
+```
+
 Run tests:
 
 ```bash
@@ -123,6 +131,8 @@ python -m unittest discover tests
 - `src/raspbot_guardrail/evaluation.py`: manifest-driven evaluation harness.
 - `src/raspbot_guardrail/execution.py`: guarded executor for generic ROS2
   `/cmd_vel` dry runs.
+- `src/raspbot_guardrail/explanation.py`: human-readable explanation output for
+  guardrail decisions.
 - `src/raspbot_guardrail/replay.py`: replay engine and episode generation.
 - `src/raspbot_guardrail/report.py`: standalone HTML report generation.
 - `src/raspbot_guardrail/backends/ros2_cmd_vel.py`: ROS2 `/cmd_vel` adapter

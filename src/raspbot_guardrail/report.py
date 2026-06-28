@@ -12,6 +12,7 @@ from .episode import Episode
 def write_html_report(path: Path, episode: Episode) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     trajectory_svg = _render_trajectory_svg(episode)
+    decision_path_html = _render_decision_paths(episode)
     trace_html = _render_prediction_trace(episode)
     rows = "\n".join(
         "<tr>"
@@ -47,6 +48,10 @@ def write_html_report(path: Path, episode: Episode) -> None:
   <section class="panel">
     <h2>Predicted 2D Trajectory</h2>
     {trajectory_svg}
+  </section>
+  <section class="panel">
+    <h2>Decision Path</h2>
+    {decision_path_html}
   </section>
   <section class="panel">
     <h2>Prediction Trace</h2>
@@ -140,4 +145,22 @@ def _render_prediction_trace(episode: Episode) -> str:
         chunks.append(f"<pre>{escape(trace)}</pre>")
     if not chunks:
         return "<p>No predictive model trace was recorded for this episode.</p>"
+    return "\n".join(chunks)
+
+
+def _render_decision_paths(episode: Episode) -> str:
+    chunks: list[str] = []
+    for event in episode.events:
+        if not event.decision_path:
+            continue
+        chunks.append(f"<h3>Event #{event.index}: {escape(event.action_type)}</h3>")
+        chunks.append("<ol>")
+        for step in event.decision_path:
+            stage = escape(step.get("stage", "unknown"))
+            result = escape(step.get("result", "unknown"))
+            reason = escape(step.get("reason", ""))
+            chunks.append(f"<li><strong>{stage}</strong>: <code>{result}</code> - {reason}</li>")
+        chunks.append("</ol>")
+    if not chunks:
+        return "<p>No decision path was recorded for this episode.</p>"
     return "\n".join(chunks)

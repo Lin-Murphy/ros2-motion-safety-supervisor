@@ -59,7 +59,24 @@
           "duration_s": 1.0
         },
         "horizon_s": null
-      }
+      },
+      "decision_path": [
+        {
+          "stage": "static_policy",
+          "result": "APPROVED",
+          "reason": "static drive policy passed"
+        },
+        {
+          "stage": "prediction",
+          "result": "RISK_UNKNOWN",
+          "reason": "pose or bounds missing"
+        },
+        {
+          "stage": "final",
+          "result": "RISK_UNKNOWN",
+          "reason": "pose or bounds missing"
+        }
+      ]
     }
   ]
 }

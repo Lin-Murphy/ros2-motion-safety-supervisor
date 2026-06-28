@@ -33,7 +33,22 @@ class ReplayEngine:
         events: list[ReplayEvent] = []
         budget = self.policy.validate_plan_budget(actions)
         if budget.decision != Decision.APPROVED:
-            event = ReplayEvent(0, "plan", budget.decision.value, Decision.RISK_UNKNOWN.value, budget.decision.value, budget.reason, [], None, {})
+            event = ReplayEvent(
+                0,
+                "plan",
+                budget.decision.value,
+                Decision.RISK_UNKNOWN.value,
+                budget.decision.value,
+                budget.reason,
+                [],
+                None,
+                {},
+                self._decision_path(
+                    ("plan_budget", budget.decision.value, budget.reason),
+                    ("prediction", "SKIPPED", "plan budget did not pass"),
+                    ("final", budget.decision.value, budget.reason),
+                ),
+            )
             return ReplayResult(Episode(name, [event], self._metadata(scene)), budget.decision)
 
         final = Decision.APPROVED
@@ -41,7 +56,24 @@ class ReplayEngine:
             static = self.policy.validate_action(action)
             if static.decision != Decision.APPROVED:
                 final = static.decision
-                events.append(ReplayEvent(index, action.action_type, static.decision.value, Decision.RISK_UNKNOWN.value, final.value, static.reason, [], None, {}))
+                events.append(
+                    ReplayEvent(
+                        index,
+                        action.action_type,
+                        static.decision.value,
+                        Decision.RISK_UNKNOWN.value,
+                        final.value,
+                        static.reason,
+                        [],
+                        None,
+                        {},
+                        self._decision_path(
+                            ("static_policy", static.decision.value, static.reason),
+                            ("prediction", "SKIPPED", "static policy did not pass"),
+                            ("final", final.value, static.reason),
+                        ),
+                    )
+                )
                 break
 
             predicted = self.predictor.predict(scene, action)
@@ -61,6 +93,11 @@ class ReplayEngine:
                     trajectory=trajectory,
                     min_clearance=predicted.min_clearance,
                     model_trace=predicted.model_trace,
+                    decision_path=self._decision_path(
+                        ("static_policy", static.decision.value, static.reason),
+                        ("prediction", predicted.decision.value, predicted.reason),
+                        ("final", final.value, predicted.reason),
+                    ),
                 )
             )
             if final != Decision.APPROVED:
@@ -88,3 +125,13 @@ class ReplayEngine:
             },
         }
         return metadata
+
+    def _decision_path(self, *steps: tuple[str, str, str]) -> list[dict[str, str]]:
+        return [
+            {
+                "stage": stage,
+                "result": result,
+                "reason": reason,
+            }
+            for stage, result, reason in steps
+        ]

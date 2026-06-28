@@ -24,7 +24,24 @@
         "final_decision": "REJECTED",
         "reason": "predicted obstacle collision or low clearance",
         "min_clearance": 0.045,
-        "risk_trigger": "clearance_below_margin"
+        "risk_trigger": "clearance_below_margin",
+        "decision_path": [
+          {
+            "stage": "static_policy",
+            "result": "APPROVED",
+            "reason": "static drive policy passed"
+          },
+          {
+            "stage": "prediction",
+            "result": "REJECTED",
+            "reason": "predicted obstacle collision or low clearance"
+          },
+          {
+            "stage": "final",
+            "result": "REJECTED",
+            "reason": "predicted obstacle collision or low clearance"
+          }
+        ]
       }
     ]
   }

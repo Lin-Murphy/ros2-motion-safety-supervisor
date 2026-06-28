@@ -15,7 +15,24 @@ The Day 0 event schema is:
   "static_decision": "APPROVED",
   "predictive_decision": "REJECTED",
   "final_decision": "REJECTED",
-  "reason": "predicted obstacle collision or low clearance"
+  "reason": "predicted obstacle collision or low clearance",
+  "decision_path": [
+    {
+      "stage": "static_policy",
+      "result": "APPROVED",
+      "reason": "static drive policy passed"
+    },
+    {
+      "stage": "prediction",
+      "result": "REJECTED",
+      "reason": "predicted obstacle collision or low clearance"
+    },
+    {
+      "stage": "final",
+      "result": "REJECTED",
+      "reason": "predicted obstacle collision or low clearance"
+    }
+  ]
 }
 ```
 

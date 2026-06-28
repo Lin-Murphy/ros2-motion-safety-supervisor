@@ -130,7 +130,24 @@
           "duration_s": 1.0
         },
         "horizon_s": 1.0
-      }
+      },
+      "decision_path": [
+        {
+          "stage": "static_policy",
+          "result": "APPROVED",
+          "reason": "static drive policy passed"
+        },
+        {
+          "stage": "prediction",
+          "result": "APPROVED",
+          "reason": "predicted path stays within scene constraints"
+        },
+        {
+          "stage": "final",
+          "result": "APPROVED",
+          "reason": "predicted path stays within scene constraints"
+        }
+      ]
     },
     {
       "index": 1,
@@ -179,7 +196,24 @@
           "duration_s": 0.2
         },
         "horizon_s": 0.0
-      }
+      },
+      "decision_path": [
+        {
+          "stage": "static_policy",
+          "result": "APPROVED",
+          "reason": "static non-drive policy passed"
+        },
+        {
+          "stage": "prediction",
+          "result": "APPROVED",
+          "reason": "non-drive action has no motion risk"
+        },
+        {
+          "stage": "final",
+          "result": "APPROVED",
+          "reason": "non-drive action has no motion risk"
+        }
+      ]
     }
   ]
 }

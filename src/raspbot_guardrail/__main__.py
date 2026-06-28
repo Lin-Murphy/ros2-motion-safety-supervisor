@@ -9,6 +9,7 @@ from .actions import parse_plan
 from .episode import read_json, write_episode
 from .evaluation import run_evaluation, write_evaluation_json, write_evaluation_markdown
 from .execution import GuardedCmdVelExecutor, write_execution_json
+from .explanation import format_explanation, write_explanation
 from .predictors.registry import available_predictors, build_predictor
 from .replay import ReplayEngine
 from .report import write_html_report
@@ -38,6 +39,13 @@ def main() -> None:
     dry_run.add_argument("--predictor", choices=available_predictors(), default="kinematic")
     dry_run.add_argument("--topic", default="/cmd_vel")
     dry_run.add_argument("--output", type=Path, default=Path("reports/cmd_vel_dry_run.json"))
+
+    explain = sub.add_parser("explain", help="explain a guardrail decision path")
+    explain.add_argument("plan", type=Path)
+    explain.add_argument("scenario", type=Path)
+    explain.add_argument("--predictor", choices=available_predictors(), default="kinematic")
+    explain.add_argument("--topic", default="/cmd_vel")
+    explain.add_argument("--output", type=Path)
 
     args = parser.parse_args()
     if args.command == "replay":
@@ -75,6 +83,15 @@ def main() -> None:
         print(f"topic={result.topic}")
         print(f"published_commands={len(result.published_commands)}")
         print(f"output={args.output}")
+    elif args.command == "explain":
+        actions = parse_plan(read_json(args.plan))
+        scene = parse_scene(read_json(args.scenario))
+        engine = ReplayEngine(predictor=build_predictor(args.predictor), predictor_name=args.predictor)
+        executor = GuardedCmdVelExecutor(engine=engine, topic=args.topic)
+        result = executor.execute(args.plan.stem, actions, scene)
+        if args.output is not None:
+            write_explanation(args.output, result)
+        print(format_explanation(result))
 
 
 if __name__ == "__main__":

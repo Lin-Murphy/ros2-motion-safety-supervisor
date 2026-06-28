@@ -31,7 +31,24 @@
         "final_decision": "APPROVED",
         "reason": "predicted path stays within scene constraints",
         "min_clearance": 0.25,
-        "risk_trigger": null
+        "risk_trigger": null,
+        "decision_path": [
+          {
+            "stage": "static_policy",
+            "result": "APPROVED",
+            "reason": "static drive policy passed"
+          },
+          {
+            "stage": "prediction",
+            "result": "APPROVED",
+            "reason": "predicted path stays within scene constraints"
+          },
+          {
+            "stage": "final",
+            "result": "APPROVED",
+            "reason": "predicted path stays within scene constraints"
+          }
+        ]
       },
       {
         "index": 1,
@@ -41,7 +58,24 @@
         "final_decision": "APPROVED",
         "reason": "non-drive action has no motion risk",
         "min_clearance": null,
-        "risk_trigger": null
+        "risk_trigger": null,
+        "decision_path": [
+          {
+            "stage": "static_policy",
+            "result": "APPROVED",
+            "reason": "static non-drive policy passed"
+          },
+          {
+            "stage": "prediction",
+            "result": "APPROVED",
+            "reason": "non-drive action has no motion risk"
+          },
+          {
+            "stage": "final",
+            "result": "APPROVED",
+            "reason": "non-drive action has no motion risk"
+          }
+        ]
       }
     ]
   }

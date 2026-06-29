@@ -11,6 +11,7 @@ from .episode import Episode
 
 def write_html_report(path: Path, episode: Episode) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    summary_html = _render_decision_summary(episode)
     trajectory_svg = _render_trajectory_svg(episode)
     decision_path_html = _render_decision_paths(episode)
     trace_html = _render_prediction_trace(episode)
@@ -34,6 +35,10 @@ def write_html_report(path: Path, episode: Episode) -> None:
   <style>
     body {{ font-family: system-ui, sans-serif; margin: 32px; line-height: 1.45; }}
     .panel {{ border: 1px solid #d0d0d0; padding: 16px; margin: 20px 0; }}
+    .summary-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }}
+    .metric {{ border: 1px solid #d8d8d8; background: #fafafa; padding: 12px; }}
+    .metric-label {{ color: #555; font-size: 12px; text-transform: uppercase; }}
+    .metric-value {{ margin-top: 6px; font-weight: 700; }}
     table {{ border-collapse: collapse; width: 100%; }}
     th, td {{ border: 1px solid #ccc; padding: 8px; text-align: left; }}
     th {{ background: #f2f2f2; }}
@@ -43,8 +48,10 @@ def write_html_report(path: Path, episode: Episode) -> None:
 </head>
 <body>
   <h1>{escape(episode.name)} replay report</h1>
-  <p>Evidence label: <code>{escape(str(episode.metadata.get("evidence_label", "unknown")))}</code></p>
-  <p>Terminal stop event added: <code>{escape(str(episode.metadata.get("stop_event_added", False)))}</code></p>
+  <section class="panel">
+    <h2>Decision Summary</h2>
+    {summary_html}
+  </section>
   <section class="panel">
     <h2>Predicted 2D Trajectory</h2>
     {trajectory_svg}
@@ -75,6 +82,55 @@ def write_html_report(path: Path, episode: Episode) -> None:
 </html>
 """
     path.write_text(html, encoding="utf-8")
+
+
+def _render_decision_summary(episode: Episode) -> str:
+    if not episode.events:
+        return "<p>No replay events were recorded.</p>"
+
+    final_event = episode.events[-1]
+    final_decision = final_event.final_decision
+    min_clearance = _minimum_clearance(episode)
+    risk_trigger = _first_risk_trigger(episode)
+    command_policy = _command_policy(final_decision)
+    metrics = [
+        ("Final decision", f"<code>{escape(final_decision)}</code>"),
+        ("Reason", escape(final_event.reason)),
+        ("Predictor", f"<code>{escape(str(episode.metadata.get('predictor', 'unknown')))}</code>"),
+        ("Evidence label", f"<code>{escape(str(episode.metadata.get('evidence_label', 'unknown')))}</code>"),
+        ("Risk trigger", f"<code>{escape(risk_trigger)}</code>"),
+        ("Min clearance", escape("n/a" if min_clearance is None else f"{min_clearance:.3f}")),
+        ("ROS2 command policy", escape(command_policy)),
+    ]
+    items = "\n".join(
+        "<div class=\"metric\">"
+        f"<div class=\"metric-label\">{escape(label)}</div>"
+        f"<div class=\"metric-value\">{value}</div>"
+        "</div>"
+        for label, value in metrics
+    )
+    return f"<div class=\"summary-grid\">{items}</div>"
+
+
+def _minimum_clearance(episode: Episode) -> float | None:
+    clearances = [event.min_clearance for event in episode.events if event.min_clearance is not None]
+    if not clearances:
+        return None
+    return min(clearances)
+
+
+def _first_risk_trigger(episode: Episode) -> str:
+    for event in episode.events:
+        trigger = event.model_trace.get("risk_trigger") if event.model_trace else None
+        if trigger:
+            return str(trigger)
+    return "none"
+
+
+def _command_policy(final_decision: str) -> str:
+    if final_decision == "APPROVED":
+        return "approved actions may pass to the generic /cmd_vel adapter, followed by a terminal stop"
+    return "rejected or uncertain actions map to a zero-velocity hold command"
 
 
 def _render_trajectory_svg(episode: Episode) -> str:

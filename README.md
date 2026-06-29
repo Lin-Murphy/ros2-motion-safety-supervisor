@@ -41,6 +41,8 @@ This project asks a narrower engineering question:
 - Converts approved actions to generic `/cmd_vel`-style dry-run commands.
 - Writes replayable JSON episodes, prediction traces, and standalone HTML
   reports.
+- Summarizes final decision, risk trigger, clearance, and ROS2 command policy in
+  the generated reports.
 
 ## Current Scope
 
@@ -58,8 +60,8 @@ Decisions are deliberately conservative:
 - `RISK_UNKNOWN`: required pose or scene evidence is missing or stale.
 
 Each replay writes a JSON episode and a standalone HTML report with a 2D
-trajectory view, obstacle markers, final decision, and minimum predicted
-clearance where available.
+trajectory view, obstacle markers, final decision, risk trigger, command
+policy, and minimum predicted clearance where available.
 
 ## Example Outputs
 

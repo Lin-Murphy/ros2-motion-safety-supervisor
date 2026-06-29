@@ -6,6 +6,10 @@
   <style>
     body { font-family: system-ui, sans-serif; margin: 32px; line-height: 1.45; }
     .panel { border: 1px solid #d0d0d0; padding: 16px; margin: 20px 0; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .metric { border: 1px solid #d8d8d8; background: #fafafa; padding: 12px; }
+    .metric-label { color: #555; font-size: 12px; text-transform: uppercase; }
+    .metric-value { margin-top: 6px; font-weight: 700; }
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
     th { background: #f2f2f2; }
@@ -15,8 +19,16 @@
 </head>
 <body>
   <h1>collision_risk replay report</h1>
-  <p>Evidence label: <code>offline_simulated</code></p>
-  <p>Terminal stop event added: <code>True</code></p>
+  <section class="panel">
+    <h2>Decision Summary</h2>
+    <div class="summary-grid"><div class="metric"><div class="metric-label">Final decision</div><div class="metric-value"><code>REJECTED</code></div></div>
+<div class="metric"><div class="metric-label">Reason</div><div class="metric-value">predicted obstacle collision or low clearance</div></div>
+<div class="metric"><div class="metric-label">Predictor</div><div class="metric-value"><code>kinematic</code></div></div>
+<div class="metric"><div class="metric-label">Evidence label</div><div class="metric-value"><code>offline_simulated</code></div></div>
+<div class="metric"><div class="metric-label">Risk trigger</div><div class="metric-value"><code>clearance_below_margin</code></div></div>
+<div class="metric"><div class="metric-label">Min clearance</div><div class="metric-value">0.045</div></div>
+<div class="metric"><div class="metric-label">ROS2 command policy</div><div class="metric-value">rejected or uncertain actions map to a zero-velocity hold command</div></div></div>
+  </section>
   <section class="panel">
     <h2>Predicted 2D Trajectory</h2>
     <svg viewBox="0 0 640 360" width="640" height="360" role="img" aria-label="Predicted trajectory">

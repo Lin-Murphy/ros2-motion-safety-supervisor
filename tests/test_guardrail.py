@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from raspbot_guardrail.actions import parse_plan
 from raspbot_guardrail.evaluation import run_evaluation
@@ -7,6 +8,7 @@ from raspbot_guardrail.execution import GuardedCmdVelExecutor
 from raspbot_guardrail.explanation import format_explanation
 from raspbot_guardrail.policy import Decision
 from raspbot_guardrail.predictors.registry import available_predictors, build_predictor
+from raspbot_guardrail.report import write_html_report
 from raspbot_guardrail.replay import ReplayEngine
 from raspbot_guardrail.scenario import parse_scene
 
@@ -156,6 +158,31 @@ class GuardrailTests(unittest.TestCase):
         self.assertIn("Decision: REJECTED", explanation)
         self.assertIn("prediction: REJECTED", explanation)
         self.assertIn("zero-velocity hold command", explanation)
+
+    def test_html_report_includes_decision_summary(self) -> None:
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.45, "vy": 0.0, "wz": 0.0, "duration_s": 2.0}}
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [{"x": 0.75, "y": 0.0, "radius": 0.12}],
+        })
+        result = ReplayEngine().run("report_collision", actions, scene)
+
+        with TemporaryDirectory() as directory:
+            report_path = Path(directory) / "report.html"
+            write_html_report(report_path, result.episode)
+            html = report_path.read_text(encoding="utf-8")
+
+        self.assertIn("Decision Summary", html)
+        self.assertIn("Final decision", html)
+        self.assertIn("REJECTED", html)
+        self.assertIn("clearance_below_margin", html)
+        self.assertIn("zero-velocity hold command", html)
 
 
 if __name__ == "__main__":

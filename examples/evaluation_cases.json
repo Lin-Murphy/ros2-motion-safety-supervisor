@@ -40,6 +40,46 @@
       "plan": "plans/overspeed.json",
       "scenario": "scenarios/simple_room.json",
       "expected_decision": "REJECTED"
+    },
+    {
+      "id": "boundary_violation_predictive_reject",
+      "category": "predictive_boundary",
+      "purpose": "A command that passes static limits is rejected because the rollout leaves the configured bounds.",
+      "plan": "plans/boundary_escape.json",
+      "scenario": "scenarios/near_boundary.json",
+      "expected_decision": "REJECTED"
+    },
+    {
+      "id": "turning_arc_predictive_reject",
+      "category": "predictive_arc_collision",
+      "purpose": "A turning command is rejected when the predicted arc enters obstacle clearance.",
+      "plan": "plans/arc_turn_risk.json",
+      "scenario": "scenarios/arc_obstacle_room.json",
+      "expected_decision": "REJECTED"
+    },
+    {
+      "id": "multi_action_second_step_predictive_reject",
+      "category": "multi_step_prediction",
+      "purpose": "A sequence is rejected on the second action after the first approved rollout advances the replay pose.",
+      "plan": "plans/multi_step_drive.json",
+      "scenario": "scenarios/multi_step_obstacle.json",
+      "expected_decision": "REJECTED"
+    },
+    {
+      "id": "missing_bounds_unknown",
+      "category": "under_observed_scene",
+      "purpose": "A command cannot be risk-scored when scene bounds are missing.",
+      "plan": "plans/clear_drive.json",
+      "scenario": "scenarios/missing_bounds.json",
+      "expected_decision": "RISK_UNKNOWN"
+    },
+    {
+      "id": "negative_duration_static_reject",
+      "category": "static_limit",
+      "purpose": "A command with a negative duration is rejected before prediction.",
+      "plan": "plans/negative_duration.json",
+      "scenario": "scenarios/simple_room.json",
+      "expected_decision": "REJECTED"
     }
   ]
 }

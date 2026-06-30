@@ -39,6 +39,9 @@ This project asks a narrower engineering question:
 - Marks decisions as `RISK_UNKNOWN` when required observation evidence is
   missing.
 - Converts approved actions to generic `/cmd_vel`-style dry-run commands.
+- Evaluates the guardrail against a deterministic 10-case benchmark covering
+  static limits, predicted collision, boundary violation, missing evidence, and
+  multi-action sequence risk.
 - Writes replayable JSON episodes, prediction traces, and standalone HTML
   reports.
 - Summarizes final decision, risk trigger, clearance, and ROS2 command policy in
@@ -70,7 +73,7 @@ policy, and minimum predicted clearance where available.
 - `reports/unknown_scene.html`: a conservative `RISK_UNKNOWN` decision when
   required scene evidence is missing.
 - `reports/evaluation.md`: a compact pass/fail report for the V1 guardrail
-  case set.
+  benchmark.
 - `reports/clear_drive_cmd_vel_dry_run.json`: generic `/cmd_vel` dry-run output
   for an approved action sequence.
 - `reports/collision_risk_cmd_vel_dry_run.json`: generic `/cmd_vel` dry-run
@@ -142,21 +145,28 @@ python -m unittest discover tests
 - `examples/`: replay inputs for safe, risky, and under-observed cases.
 - `docs/`: control-chain evidence, command policy, data model, and validation
   notes.
+- `docs/evaluation-benchmark.md`: the V1 case taxonomy and benchmark scope.
 - `docs/prediction-model.md`: the V1 rollout equations, clearance check, and
   trace output.
 - `docs/model-integration.md`: predictor registry, learned-risk extension, and
   future world-model integration boundary.
 - `docs/ros2-cmd-vel-contract.md`: generic ROS2 mobile-base command boundary.
 
-## Validation Harness
+## Evaluation Benchmark
 
 The evaluation manifest in `examples/evaluation_cases.json` checks V1 behaviour
-against safe, risky, and under-observed command cases. It reports expected
-versus actual decisions and records both static and predictive decisions.
+against safe, static-limit, predictive-risk, under-observed, stale-observation,
+and multi-action sequence cases. It reports expected versus actual decisions,
+the decision event, static and predictive decisions, risk trigger, reason, and
+minimum predicted clearance where available.
 
 The most important red-team case is `collision_risk_predictive_reject`: the
 candidate action passes static limits, but the predicted trajectory crosses the
 obstacle clearance margin, so the predictive layer rejects it.
+
+The sequence case is also important: `multi_action_second_step_predictive_reject`
+shows that replay advances the pose after an approved first action and can
+reject a later action in the same plan.
 
 ## Model Integration
 

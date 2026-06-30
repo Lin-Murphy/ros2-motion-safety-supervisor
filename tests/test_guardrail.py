@@ -71,8 +71,13 @@ class GuardrailTests(unittest.TestCase):
     def test_evaluation_manifest_passes(self) -> None:
         summary = run_evaluation(Path("examples/evaluation_cases.json"))
         self.assertEqual(summary.predictor, "kinematic")
-        self.assertEqual(summary.total, 5)
-        self.assertEqual(summary.passed, 5)
+        self.assertEqual(summary.total, 10)
+        self.assertEqual(summary.passed, 10)
+
+        categories = {case.category for case in summary.cases}
+        self.assertIn("predictive_boundary", categories)
+        self.assertIn("predictive_arc_collision", categories)
+        self.assertIn("multi_step_prediction", categories)
 
         collision_case = next(
             case for case in summary.cases
@@ -80,6 +85,21 @@ class GuardrailTests(unittest.TestCase):
         )
         self.assertEqual(collision_case.static_decision, Decision.APPROVED.value)
         self.assertEqual(collision_case.predictive_decision, Decision.REJECTED.value)
+
+        boundary_case = next(
+            case for case in summary.cases
+            if case.case_id == "boundary_violation_predictive_reject"
+        )
+        self.assertEqual(boundary_case.risk_trigger, "boundary_violation")
+
+        multi_step_case = next(
+            case for case in summary.cases
+            if case.case_id == "multi_action_second_step_predictive_reject"
+        )
+        self.assertEqual(multi_step_case.decision_event_index, 1)
+        self.assertEqual(multi_step_case.static_decision, Decision.APPROVED.value)
+        self.assertEqual(multi_step_case.predictive_decision, Decision.REJECTED.value)
+        self.assertEqual(multi_step_case.risk_trigger, "clearance_below_margin")
 
     def test_predictor_registry_builds_kinematic_predictor(self) -> None:
         self.assertIn("kinematic", available_predictors())
@@ -140,6 +160,28 @@ class GuardrailTests(unittest.TestCase):
         self.assertEqual(result.decision, Decision.APPROVED)
         self.assertEqual(len(result.published_commands), 2)
         self.assertEqual(result.reason, "all actions approved; commands emitted to dry-run cmd_vel backend")
+
+    def test_replay_advances_pose_between_approved_actions(self) -> None:
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.25, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}},
+                {"type": "drive", "command": {"vx": 0.25, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}},
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -1.5, "max_x": 1.5, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [{"x": 0.65, "y": 0.0, "radius": 0.08}],
+        })
+        result = ReplayEngine().run("multi_step_collision", actions, scene)
+
+        self.assertEqual(result.final_decision, Decision.REJECTED)
+        self.assertEqual(len(result.episode.events), 2)
+        self.assertEqual(result.episode.events[0].final_decision, Decision.APPROVED.value)
+        self.assertEqual(result.episode.events[1].index, 1)
+        self.assertEqual(result.episode.events[1].final_decision, Decision.REJECTED.value)
+        self.assertEqual(result.episode.events[1].model_trace["risk_trigger"], "clearance_below_margin")
 
     def test_explanation_includes_decision_path_and_command_policy(self) -> None:
         actions = parse_plan({

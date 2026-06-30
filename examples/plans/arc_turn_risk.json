@@ -1,0 +1,13 @@
+{
+  "actions": [
+    {
+      "type": "drive",
+      "command": {
+        "vx": 0.3,
+        "vy": 0.0,
+        "wz": 0.9,
+        "duration_s": 1.5
+      }
+    }
+  ]
+}

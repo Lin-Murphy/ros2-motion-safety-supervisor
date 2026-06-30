@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from .actions import TypedAction
 from .episode import Episode, ReplayEvent
 from .policy import Decision, StaticPolicy
-from .predictor import Scene
+from .predictor import Pose2D, PredictedPoint, Scene
 from .predictors.base import Predictor
 from .predictors.registry import build_predictor
 
@@ -31,6 +31,7 @@ class ReplayEngine:
 
     def run(self, name: str, actions: list[TypedAction], scene: Scene) -> ReplayResult:
         events: list[ReplayEvent] = []
+        active_scene = scene
         budget = self.policy.validate_plan_budget(actions)
         if budget.decision != Decision.APPROVED:
             event = ReplayEvent(
@@ -76,7 +77,7 @@ class ReplayEngine:
                 )
                 break
 
-            predicted = self.predictor.predict(scene, action)
+            predicted = self.predictor.predict(active_scene, action)
             final = predicted.decision
             trajectory = [
                 {"t": point.t, "x": point.x, "y": point.y, "yaw": point.yaw}
@@ -102,8 +103,21 @@ class ReplayEngine:
             )
             if final != Decision.APPROVED:
                 break
+            active_scene = self._scene_after_prediction(active_scene, predicted.trajectory)
 
         return ReplayResult(Episode(name, events, self._metadata(scene)), final)
+
+    def _scene_after_prediction(self, scene: Scene, trajectory: tuple[PredictedPoint, ...]) -> Scene:
+        if scene.pose is None or not trajectory:
+            return scene
+        last = trajectory[-1]
+        return Scene(
+            pose=Pose2D(last.x, last.y, last.yaw),
+            bounds=scene.bounds,
+            obstacles=scene.obstacles,
+            observation_age_s=scene.observation_age_s,
+            max_observation_age_s=scene.max_observation_age_s,
+        )
 
     def _metadata(self, scene: Scene) -> dict[str, object]:
         metadata = {

@@ -1,0 +1,22 @@
+{
+  "actions": [
+    {
+      "type": "drive",
+      "command": {
+        "vx": 0.25,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 1.0
+      }
+    },
+    {
+      "type": "drive",
+      "command": {
+        "vx": 0.25,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 1.0
+      }
+    }
+  ]
+}

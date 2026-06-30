@@ -29,10 +29,12 @@ class EvaluationCaseResult:
     case_id: str
     category: str
     purpose: str
+    decision_event_index: int | None
     expected_decision: str
     actual_decision: str
     static_decision: str
     predictive_decision: str
+    risk_trigger: str | None
     reason: str
     min_clearance: float | None
     passed: bool
@@ -76,7 +78,7 @@ def run_evaluation(manifest_path: Path, engine: ReplayEngine | None = None) -> E
         actions = parse_plan(read_json(case.plan_path))
         scene = parse_scene(read_json(case.scenario_path))
         replay = replay_engine.run(case.case_id, actions, scene)
-        event = replay.episode.events[0] if replay.episode.events else None
+        event = _decision_event(replay.episode.events)
         actual = replay.final_decision.value
 
         results.append(
@@ -84,10 +86,12 @@ def run_evaluation(manifest_path: Path, engine: ReplayEngine | None = None) -> E
                 case_id=case.case_id,
                 category=case.category,
                 purpose=case.purpose,
+                decision_event_index=None if event is None else event.index,
                 expected_decision=case.expected_decision.value,
                 actual_decision=actual,
                 static_decision="" if event is None else event.static_decision,
                 predictive_decision="" if event is None else event.predictive_decision,
+                risk_trigger=_risk_trigger(event),
                 reason="" if event is None else event.reason,
                 min_clearance=_round_optional(None if event is None else event.min_clearance),
                 passed=actual == case.expected_decision.value,
@@ -116,8 +120,8 @@ def write_evaluation_markdown(path: Path, summary: EvaluationSummary) -> None:
         f"- Passed: {summary.passed}",
         f"- Pass rate: {summary.pass_rate:.0%}",
         "",
-        "| Case | Category | Expected | Actual | Static | Predictive | Result | Min clearance | Reason |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        "| Case | Category | Event | Expected | Actual | Static | Predictive | Trigger | Result | Min clearance | Reason |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for case in summary.cases:
         result = "PASS" if case.passed else "FAIL"
@@ -127,10 +131,12 @@ def write_evaluation_markdown(path: Path, summary: EvaluationSummary) -> None:
                 [
                     _cell(case.case_id),
                     _cell(case.category),
+                    "" if case.decision_event_index is None else str(case.decision_event_index),
                     _cell(case.expected_decision),
                     _cell(case.actual_decision),
                     _cell(case.static_decision),
                     _cell(case.predictive_decision),
+                    "" if case.risk_trigger is None else _cell(case.risk_trigger),
                     result,
                     _clearance_cell(case.min_clearance),
                     _cell(case.reason),
@@ -191,6 +197,24 @@ def _round_optional(value: float | None) -> float | None:
     if value is None:
         return None
     return round(value, 3)
+
+
+def _risk_trigger(event: Any) -> str | None:
+    if event is None or not event.model_trace:
+        return None
+    trigger = event.model_trace.get("risk_trigger")
+    if trigger is None:
+        return None
+    return str(trigger)
+
+
+def _decision_event(events: list[Any]) -> Any:
+    for event in events:
+        if event.final_decision != Decision.APPROVED.value:
+            return event
+    if not events:
+        return None
+    return events[0]
 
 
 def _clearance_cell(value: float | None) -> str:

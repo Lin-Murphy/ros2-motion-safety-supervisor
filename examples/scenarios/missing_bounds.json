@@ -1,0 +1,10 @@
+{
+  "pose": {
+    "x": -0.8,
+    "y": 0.0,
+    "yaw": 0.0
+  },
+  "bounds": null,
+  "observation_age_s": 0.1,
+  "obstacles": []
+}

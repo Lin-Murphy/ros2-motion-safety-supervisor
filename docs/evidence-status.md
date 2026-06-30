@@ -7,7 +7,7 @@
 | Camera frames can be published through `/image_raw`. | `hardware_validated` | Recorded in `docs/learning-log.md`. |
 | Planner-to-executor action boundaries exist in local AI-agent examples. | `source_inspected` | Local source paths identified; public code is not copied. |
 | The V1 predictor can reject collision-risk replay examples. | `offline_simulated` | Covered by examples and tests. |
-| The V1 guardrail can be evaluated across safe, static-limit, predictive-risk, and under-observed cases. | `offline_simulated` | Covered by `examples/evaluation_cases.json` and `reports/evaluation.md`. |
+| The V1 guardrail can be evaluated across safe, static-limit, predictive-risk, under-observed, stale-observation, and multi-action sequence cases. | `offline_simulated` | Covered by `examples/evaluation_cases.json`, `docs/evaluation-benchmark.md`, and `reports/evaluation.md`. |
 | Replay episodes expose the predictor assumptions and risk trigger. | `offline_simulated` | Covered by `model_trace` in replay JSON and HTML reports. |
 | HTML reports summarize final decision, risk trigger, clearance, and ROS2 command policy. | `offline_simulated` | Covered by `reports/*.html` generation and tests. |
 | The prediction layer is model-pluggable. | `offline_simulated` | Covered by the predictor interface, registry, and CLI `--predictor kinematic` option. |

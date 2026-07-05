@@ -16,6 +16,7 @@ from .backends.ros2_cmd_vel import (
     action_to_twist_commands,
     zero_twist,
 )
+from .backends.command import DryRunCommandBackend
 from .episode import Episode
 from .policy import Decision
 from .predictor import Scene
@@ -67,11 +68,13 @@ class GuardedCmdVelExecutor:
         self,
         engine: ReplayEngine | None = None,
         publisher: CmdVelPublisher | None = None,
+        backend: DryRunCommandBackend | None = None,
         topic: str = DEFAULT_CMD_VEL_TOPIC,
         stop_duration_s: float = 0.2,
     ) -> None:
         self.engine = engine or ReplayEngine()
-        self.publisher = publisher or DryRunCmdVelPublisher(topic=topic)
+        self.backend = backend or DryRunCommandBackend(topic=topic, publisher=publisher or DryRunCmdVelPublisher(topic=topic))
+        self.publisher = publisher or self.backend.publisher
         self.topic = topic
         self.stop_duration_s = stop_duration_s
 
@@ -82,15 +85,15 @@ class GuardedCmdVelExecutor:
         if replay.final_decision == Decision.APPROVED:
             for action in actions:
                 for command in action_to_twist_commands(action, topic=self.topic):
-                    self.publisher.publish(command)
+                    self.backend.publish(command)
                     published.append(command)
             if not published or not _is_zero_velocity(published[-1]):
                 terminal_stop = zero_twist(duration_s=self.stop_duration_s, topic=self.topic)
-                self.publisher.publish(terminal_stop)
+                self.backend.publish(terminal_stop)
                 published.append(terminal_stop)
         else:
             hold_command = zero_twist(duration_s=self.stop_duration_s, topic=self.topic)
-            self.publisher.publish(hold_command)
+            self.backend.hold(duration_s=self.stop_duration_s)
             published.append(hold_command)
 
         return GuardedExecutionResult(

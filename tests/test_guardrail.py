@@ -4,6 +4,8 @@ from tempfile import TemporaryDirectory
 
 from raspbot_guardrail.actions import parse_plan
 from raspbot_guardrail.decision_arbiter import DecisionArbiter
+from raspbot_guardrail.backends.command import DryRunCommandBackend
+from raspbot_guardrail.backends.ros2_cmd_vel import zero_twist
 from raspbot_guardrail.evaluation import run_evaluation
 from raspbot_guardrail.execution import GuardedCmdVelExecutor
 from raspbot_guardrail.explanation import format_explanation
@@ -15,6 +17,9 @@ from raspbot_guardrail.reference_execution import ReferenceExecutionModel, Refer
 from raspbot_guardrail.replay import ReplayEngine
 from raspbot_guardrail.research_benchmark import generate_research_benchmark
 from raspbot_guardrail.research_evaluation import run_research_evaluation
+from raspbot_guardrail.gateway import MotionSafetySupervisor
+from raspbot_guardrail.recorders import InMemoryEventRecorder
+from raspbot_guardrail.sources import ReplayActionSource
 from raspbot_guardrail.scenario import parse_scene
 
 
@@ -341,6 +346,28 @@ class GuardrailTests(unittest.TestCase):
         self.assertEqual(result.final_decision, Decision.RISK_UNKNOWN)
         self.assertEqual(result.episode.events[0].faults[0]["code"], "predictor_exception")
         self.assertEqual(result.episode.events[0].decision_path[-1]["result"], Decision.RISK_UNKNOWN.value)
+
+    def test_supervisor_and_adapters_share_one_core_decision(self) -> None:
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.2, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}}
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": -0.8, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [],
+        })
+        source = ReplayActionSource(actions, scene)
+        recorder = InMemoryEventRecorder()
+        result = MotionSafetySupervisor(recorder=recorder).evaluate("adapter_clear", source.actions(), source.scene())
+        backend = DryRunCommandBackend()
+        backend.publish(zero_twist())
+
+        self.assertEqual(result.decision, Decision.APPROVED)
+        self.assertEqual(len(recorder.recorded_events), 1)
+        self.assertEqual(backend.name, "dry_run_cmd_vel")
 
 
 if __name__ == "__main__":

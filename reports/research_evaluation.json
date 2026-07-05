@@ -1,0 +1,145 @@
+{
+  "predictor": "kinematic",
+  "total": 12,
+  "dangerous_cases": 3,
+  "dangerous_false_negatives": 2,
+  "dangerous_false_negative_rate": 0.6666666666666666,
+  "false_rejects": 1,
+  "false_reject_rate": 0.1111111111111111,
+  "unknown_cases": 0,
+  "unknown_rate": 0.0,
+  "cases": [
+    {
+      "case_id": "id_clear_01",
+      "split": "in_distribution",
+      "reference_outcome": "SAFE",
+      "predicted_decision": "APPROVED",
+      "dangerous_false_negative": false,
+      "false_reject": false,
+      "unknown": false,
+      "reference_min_clearance": null,
+      "predicted_min_clearance": null
+    },
+    {
+      "case_id": "id_clear_02",
+      "split": "in_distribution",
+      "reference_outcome": "SAFE",
+      "predicted_decision": "APPROVED",
+      "dangerous_false_negative": false,
+      "false_reject": false,
+      "unknown": false,
+      "reference_min_clearance": null,
+      "predicted_min_clearance": null
+    },
+    {
+      "case_id": "id_near_obstacle_01",
+      "split": "in_distribution",
+      "reference_outcome": "SAFE",
+      "predicted_decision": "APPROVED",
+      "dangerous_false_negative": false,
+      "false_reject": false,
+      "unknown": false,
+      "reference_min_clearance": 1.3223,
+      "predicted_min_clearance": 1.2989
+    },
+    {
+      "case_id": "id_obstacle_01",
+      "split": "in_distribution",
+      "reference_outcome": "COLLISION",
+      "predicted_decision": "REJECTED",
+      "dangerous_false_negative": false,
+      "false_reject": false,
+      "unknown": false,
+      "reference_min_clearance": -0.012,
+      "predicted_min_clearance": 0.025
+    },
+    {
+      "case_id": "shift_delay_01",
+      "split": "parameter_shift",
+      "reference_outcome": "SAFE",
+      "predicted_decision": "APPROVED",
+      "dangerous_false_negative": false,
+      "false_reject": false,
+      "unknown": false,
+      "reference_min_clearance": 0.2895,
+      "predicted_min_clearance": 0.145
+    },
+    {
+      "case_id": "shift_accel_01",
+      "split": "parameter_shift",
+      "reference_outcome": "SAFE",
+      "predicted_decision": "APPROVED",
+      "dangerous_false_negative": false,
+      "false_reject": false,
+      "unknown": false,
+      "reference_min_clearance": 0.6025,
+      "predicted_min_clearance": 0.35
+    },
+    {
+      "case_id": "shift_scale_01",
+      "split": "parameter_shift",
+      "reference_outcome": "COLLISION",
+      "predicted_decision": "APPROVED",
+      "dangerous_false_negative": true,
+      "false_reject": false,
+      "unknown": false,
+      "reference_min_clearance": -0.002,
+      "predicted_min_clearance": 0.06
+    },
+    {
+      "case_id": "shift_turn_01",
+      "split": "parameter_shift",
+      "reference_outcome": "SAFE",
+      "predicted_decision": "APPROVED",
+      "dangerous_false_negative": false,
+      "false_reject": false,
+      "unknown": false,
+      "reference_min_clearance": 0.3273,
+      "predicted_min_clearance": 0.2404
+    },
+    {
+      "case_id": "scene_offset_01",
+      "split": "scene_shift",
+      "reference_outcome": "SAFE",
+      "predicted_decision": "APPROVED",
+      "dangerous_false_negative": false,
+      "false_reject": false,
+      "unknown": false,
+      "reference_min_clearance": 0.1669,
+      "predicted_min_clearance": 0.1029
+    },
+    {
+      "case_id": "scene_arc_01",
+      "split": "scene_shift",
+      "reference_outcome": "SAFE",
+      "predicted_decision": "APPROVED",
+      "dangerous_false_negative": false,
+      "false_reject": false,
+      "unknown": false,
+      "reference_min_clearance": 0.1508,
+      "predicted_min_clearance": 0.1148
+    },
+    {
+      "case_id": "stress_scale_01",
+      "split": "stress_test",
+      "reference_outcome": "COLLISION",
+      "predicted_decision": "APPROVED",
+      "dangerous_false_negative": true,
+      "false_reject": false,
+      "unknown": false,
+      "reference_min_clearance": -0.006,
+      "predicted_min_clearance": 0.17
+    },
+    {
+      "case_id": "stress_scale_02",
+      "split": "stress_test",
+      "reference_outcome": "SAFE",
+      "predicted_decision": "REJECTED",
+      "dangerous_false_negative": false,
+      "false_reject": true,
+      "unknown": false,
+      "reference_min_clearance": 0.0104,
+      "predicted_min_clearance": 0.0413
+    }
+  ]
+}

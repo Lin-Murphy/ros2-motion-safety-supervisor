@@ -74,6 +74,8 @@ policy, and minimum predicted clearance where available.
   required scene evidence is missing.
 - `reports/evaluation.md`: a compact pass/fail report for the V1 guardrail
   benchmark.
+- `reports/research_evaluation.md`: baseline results against independent
+  reference execution outcomes.
 - `reports/clear_drive_cmd_vel_dry_run.json`: generic `/cmd_vel` dry-run output
   for an approved action sequence.
 - `reports/collision_risk_cmd_vel_dry_run.json`: generic `/cmd_vel` dry-run
@@ -107,6 +109,12 @@ Run the evaluation suite:
 python -m raspbot_guardrail evaluate examples/evaluation_cases.json --json reports/evaluation.json --markdown reports/evaluation.md
 ```
 
+Run the research benchmark against the independent reference execution model:
+
+```bash
+python -m raspbot_guardrail research-evaluate --json reports/research_evaluation.json --markdown reports/research_evaluation.md
+```
+
 Run a generic ROS2 `/cmd_vel` dry run:
 
 ```bash
@@ -131,11 +139,15 @@ python -m unittest discover tests
 - `src/raspbot_guardrail/policy.py`: static command validation.
 - `src/raspbot_guardrail/predictor.py`: deterministic short-horizon trajectory
   and risk prediction.
+- `src/raspbot_guardrail/reference_execution.py`: independent offline execution
+  model for future benchmark ground truth.
 - `src/raspbot_guardrail/predictors/`: predictor interface and registry for
   future learned/world-model predictors.
 - `src/raspbot_guardrail/evaluation.py`: manifest-driven evaluation harness.
 - `src/raspbot_guardrail/execution.py`: guarded executor for generic ROS2
   `/cmd_vel` dry runs.
+- `docs/architecture.md`: architecture-first command gateway contracts,
+  responsibilities, and failure semantics.
 - `src/raspbot_guardrail/explanation.py`: human-readable explanation output for
   guardrail decisions.
 - `src/raspbot_guardrail/replay.py`: replay engine and episode generation.
@@ -143,11 +155,22 @@ python -m unittest discover tests
 - `src/raspbot_guardrail/backends/ros2_cmd_vel.py`: ROS2 `/cmd_vel` adapter
   boundary.
 - `examples/`: replay inputs for safe, risky, and under-observed cases.
+- `benchmarks/research_cases.json`: deterministic research cases with explicit
+  distribution splits and reference execution parameters.
 - `docs/`: control-chain evidence, command policy, data model, and validation
   notes.
 - `docs/evaluation-benchmark.md`: the V1 case taxonomy and benchmark scope.
+- `docs/reference-execution-model.md`: the independent execution model used for
+  future ground-truth labels.
 - `docs/prediction-model.md`: the V1 rollout equations, clearance check, and
   trace output.
+- `docs/problem-definition.md`: research question, safety metrics, and scope
+  limits.
+- `docs/baseline-limitations.md`: assumptions and expected baseline failures.
+- `docs/reference-execution-model.md`: independent execution model and ground
+  truth role.
+- `docs/nav2-comparison.md`: boundary between this guardrail and Nav2 spatial
+  constraints.
 - `docs/model-integration.md`: predictor registry, learned-risk extension, and
   future world-model integration boundary.
 - `docs/ros2-cmd-vel-contract.md`: generic ROS2 mobile-base command boundary.

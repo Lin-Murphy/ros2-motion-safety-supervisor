@@ -3,13 +3,18 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from raspbot_guardrail.actions import parse_plan
+from raspbot_guardrail.decision_arbiter import DecisionArbiter
 from raspbot_guardrail.evaluation import run_evaluation
 from raspbot_guardrail.execution import GuardedCmdVelExecutor
 from raspbot_guardrail.explanation import format_explanation
 from raspbot_guardrail.policy import Decision
+from raspbot_guardrail.policy import PolicyResult
 from raspbot_guardrail.predictors.registry import available_predictors, build_predictor
 from raspbot_guardrail.report import write_html_report
+from raspbot_guardrail.reference_execution import ReferenceExecutionModel, ReferenceOutcome
 from raspbot_guardrail.replay import ReplayEngine
+from raspbot_guardrail.research_benchmark import generate_research_benchmark
+from raspbot_guardrail.research_evaluation import run_research_evaluation
 from raspbot_guardrail.scenario import parse_scene
 
 
@@ -225,6 +230,117 @@ class GuardrailTests(unittest.TestCase):
         self.assertIn("REJECTED", html)
         self.assertIn("clearance_below_margin", html)
         self.assertIn("zero-velocity hold command", html)
+
+    def test_reference_execution_exposes_delay_and_acceleration_limited_ground_truth(self) -> None:
+        action = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.8, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}}
+            ]
+        })[0]
+        scene = parse_scene({
+            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [],
+        })
+
+        result = ReferenceExecutionModel(
+            dt_s=0.05,
+            command_delay_s=0.2,
+            max_linear_accel=0.4,
+            max_angular_accel=1.0,
+        ).execute(scene, action)
+
+        self.assertEqual(result.outcome, ReferenceOutcome.SAFE)
+        self.assertGreater(result.trajectory[-1].t, action.duration_s)
+        self.assertLess(result.trajectory[3].x, 0.01)
+        self.assertEqual(result.model_trace["model"], "reference_acceleration_limited_v1")
+
+    def test_reference_execution_has_independent_collision_outcome(self) -> None:
+        action = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.5, "vy": 0.0, "wz": 0.0, "duration_s": 1.5}}
+            ]
+        })[0]
+        scene = parse_scene({
+            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [{"x": 0.45, "y": 0.0, "radius": 0.08}],
+        })
+
+        result = ReferenceExecutionModel(
+            dt_s=0.05,
+            command_delay_s=0.0,
+            max_linear_accel=2.0,
+            max_angular_accel=2.0,
+        ).execute(scene, action)
+
+        self.assertEqual(result.outcome, ReferenceOutcome.COLLISION)
+        self.assertIsNotNone(result.failure_time_s)
+        self.assertLess(result.min_clearance, 0.0)
+
+    def test_research_benchmark_has_deterministic_splits(self) -> None:
+        first = generate_research_benchmark()
+        second = generate_research_benchmark()
+
+        self.assertEqual(first, second)
+        self.assertEqual(len(first), 12)
+        self.assertEqual(
+            {case.split for case in first},
+            {"in_distribution", "parameter_shift", "scene_shift", "stress_test"},
+        )
+        self.assertEqual(
+            {case.split: sum(item.split == case.split for item in first) for case in first},
+            {"in_distribution": 4, "parameter_shift": 4, "scene_shift": 2, "stress_test": 2},
+        )
+        self.assertTrue(all(case.scene.observation_age_s == 0.1 for case in first))
+        self.assertTrue(all("command_delay_s" in case.reference_config for case in first))
+
+    def test_research_evaluation_reports_baseline_false_negatives(self) -> None:
+        summary = run_research_evaluation()
+
+        self.assertEqual(summary.predictor, "kinematic")
+        self.assertEqual(summary.total, 12)
+        self.assertGreater(summary.dangerous_cases, 0)
+        self.assertGreater(summary.dangerous_false_negatives, 0)
+        self.assertGreaterEqual(summary.false_rejects, 0)
+        self.assertEqual(summary.unknown_cases, 0)
+
+    def test_decision_arbiter_never_approves_missing_prediction(self) -> None:
+        result = DecisionArbiter().arbitrate(
+            PolicyResult(Decision.APPROVED, "static policy passed"),
+            prediction=None,
+        )
+
+        self.assertEqual(result.decision, Decision.RISK_UNKNOWN)
+        self.assertEqual(result.fallback, "zero_velocity_hold")
+        self.assertEqual(result.decision_path[-1]["stage"], "final")
+
+    def test_predictor_exception_becomes_unknown_fault_and_hold(self) -> None:
+        class ExplodingPredictor:
+            def predict(self, scene, action):
+                raise RuntimeError("simulated predictor failure")
+
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.2, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}}
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": -0.8, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [],
+        })
+
+        result = ReplayEngine(predictor=ExplodingPredictor(), predictor_name="exploding").run(
+            "predictor_failure", actions, scene
+        )
+
+        self.assertEqual(result.final_decision, Decision.RISK_UNKNOWN)
+        self.assertEqual(result.episode.events[0].faults[0]["code"], "predictor_exception")
+        self.assertEqual(result.episode.events[0].decision_path[-1]["result"], Decision.RISK_UNKNOWN.value)
 
 
 if __name__ == "__main__":

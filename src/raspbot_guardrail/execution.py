@@ -52,6 +52,7 @@ class GuardedExecutionResult:
                         "min_clearance": None if event.min_clearance is None else round(event.min_clearance, 3),
                         "risk_trigger": event.model_trace.get("risk_trigger") if event.model_trace else None,
                         "decision_path": event.decision_path,
+                        "faults": event.faults,
                     }
                     for event in self.episode.events
                 ],

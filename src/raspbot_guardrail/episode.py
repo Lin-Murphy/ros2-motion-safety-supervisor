@@ -20,6 +20,7 @@ class ReplayEvent:
     min_clearance: float | None
     model_trace: dict[str, Any]
     decision_path: list[dict[str, str]] = field(default_factory=list)
+    faults: list[dict[str, str]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

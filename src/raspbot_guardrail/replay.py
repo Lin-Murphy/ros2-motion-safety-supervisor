@@ -5,7 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .actions import TypedAction
+from .decision_arbiter import DecisionArbiter
 from .episode import Episode, ReplayEvent
+from .faults import Fault
 from .policy import Decision, StaticPolicy
 from .predictor import Pose2D, PredictedPoint, Scene
 from .predictors.base import Predictor
@@ -24,31 +26,31 @@ class ReplayEngine:
         policy: StaticPolicy | None = None,
         predictor: Predictor | None = None,
         predictor_name: str | None = None,
+        arbiter: DecisionArbiter | None = None,
     ) -> None:
         self.policy = policy or StaticPolicy()
         self.predictor = predictor or build_predictor("kinematic")
         self.predictor_name = predictor_name or ("custom" if predictor is not None else "kinematic")
+        self.arbiter = arbiter or DecisionArbiter()
 
     def run(self, name: str, actions: list[TypedAction], scene: Scene) -> ReplayResult:
         events: list[ReplayEvent] = []
         active_scene = scene
         budget = self.policy.validate_plan_budget(actions)
         if budget.decision != Decision.APPROVED:
+            arbitration = self.arbiter.arbitrate(budget, prediction_skipped_reason="plan budget did not pass")
             event = ReplayEvent(
                 0,
                 "plan",
                 budget.decision.value,
                 Decision.RISK_UNKNOWN.value,
                 budget.decision.value,
-                budget.reason,
+                arbitration.reason,
                 [],
                 None,
                 {},
-                self._decision_path(
-                    ("plan_budget", budget.decision.value, budget.reason),
-                    ("prediction", "SKIPPED", "plan budget did not pass"),
-                    ("final", budget.decision.value, budget.reason),
-                ),
+                arbitration.decision_path,
+                [fault.to_dict() for fault in arbitration.faults],
             )
             return ReplayResult(Episode(name, [event], self._metadata(scene)), budget.decision)
 
@@ -56,7 +58,8 @@ class ReplayEngine:
         for index, action in enumerate(actions):
             static = self.policy.validate_action(action)
             if static.decision != Decision.APPROVED:
-                final = static.decision
+                arbitration = self.arbiter.arbitrate(static)
+                final = arbitration.decision
                 events.append(
                     ReplayEvent(
                         index,
@@ -64,46 +67,47 @@ class ReplayEngine:
                         static.decision.value,
                         Decision.RISK_UNKNOWN.value,
                         final.value,
-                        static.reason,
+                        arbitration.reason,
                         [],
                         None,
                         {},
-                        self._decision_path(
-                            ("static_policy", static.decision.value, static.reason),
-                            ("prediction", "SKIPPED", "static policy did not pass"),
-                            ("final", final.value, static.reason),
-                        ),
+                        arbitration.decision_path,
+                        [fault.to_dict() for fault in arbitration.faults],
                     )
                 )
                 break
 
-            predicted = self.predictor.predict(active_scene, action)
-            final = predicted.decision
+            fault = None
+            try:
+                predicted = self.predictor.predict(active_scene, action)
+            except Exception as exc:  # noqa: BLE001 - fault boundary must contain plugin failures.
+                fault = Fault("predictor_exception", self.predictor_name, str(exc))
+                predicted = None
+            arbitration = self.arbiter.arbitrate(static, predicted, fault=fault)
+            final = arbitration.decision
             trajectory = [
                 {"t": point.t, "x": point.x, "y": point.y, "yaw": point.yaw}
-                for point in predicted.trajectory
+                for point in (() if predicted is None else predicted.trajectory)
             ]
+            model_trace = {} if predicted is None else predicted.model_trace
             events.append(
                 ReplayEvent(
                     index=index,
                     action_type=action.action_type,
                     static_decision=static.decision.value,
-                    predictive_decision=predicted.decision.value,
+                    predictive_decision=Decision.RISK_UNKNOWN.value if predicted is None else predicted.decision.value,
                     final_decision=final.value,
-                    reason=predicted.reason,
+                    reason=arbitration.reason,
                     trajectory=trajectory,
-                    min_clearance=predicted.min_clearance,
-                    model_trace=predicted.model_trace,
-                    decision_path=self._decision_path(
-                        ("static_policy", static.decision.value, static.reason),
-                        ("prediction", predicted.decision.value, predicted.reason),
-                        ("final", final.value, predicted.reason),
-                    ),
+                    min_clearance=None if predicted is None else predicted.min_clearance,
+                    model_trace=model_trace,
+                    decision_path=arbitration.decision_path,
+                    faults=[fault_item.to_dict() for fault_item in arbitration.faults],
                 )
             )
             if final != Decision.APPROVED:
                 break
-            active_scene = self._scene_after_prediction(active_scene, predicted.trajectory)
+            active_scene = self._scene_after_prediction(active_scene, tuple() if predicted is None else predicted.trajectory)
 
         return ReplayResult(Episode(name, events, self._metadata(scene)), final)
 

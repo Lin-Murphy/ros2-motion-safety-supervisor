@@ -13,6 +13,7 @@ from .explanation import format_explanation, write_explanation
 from .predictors.registry import available_predictors, build_predictor
 from .replay import ReplayEngine
 from .report import write_html_report
+from .research_evaluation import run_research_evaluation, write_research_evaluation_json, write_research_evaluation_markdown
 from .scenario import parse_scene
 
 
@@ -32,6 +33,10 @@ def main() -> None:
     evaluate.add_argument("--json", type=Path, default=Path("reports/evaluation.json"))
     evaluate.add_argument("--markdown", type=Path, default=Path("reports/evaluation.md"))
     evaluate.add_argument("--predictor", choices=available_predictors(), default="kinematic")
+
+    research_evaluate = sub.add_parser("research-evaluate", help="evaluate a predictor against the independent research benchmark")
+    research_evaluate.add_argument("--json", type=Path, default=Path("reports/research_evaluation.json"))
+    research_evaluate.add_argument("--markdown", type=Path, default=Path("reports/research_evaluation.md"))
 
     dry_run = sub.add_parser("dry-run", help="run guardrail and emit generic ROS2 cmd_vel commands")
     dry_run.add_argument("plan", type=Path)
@@ -83,6 +88,15 @@ def main() -> None:
         print(f"topic={result.topic}")
         print(f"published_commands={len(result.published_commands)}")
         print(f"output={args.output}")
+    elif args.command == "research-evaluate":
+        summary = run_research_evaluation()
+        write_research_evaluation_json(args.json, summary)
+        write_research_evaluation_markdown(args.markdown, summary)
+        print(f"dangerous_false_negatives={summary.dangerous_false_negatives}/{summary.dangerous_cases}")
+        print(f"false_rejects={summary.false_rejects}")
+        print(f"unknown_rate={summary.unknown_rate:.0%}")
+        print(f"json={args.json}")
+        print(f"markdown={args.markdown}")
     elif args.command == "explain":
         actions = parse_plan(read_json(args.plan))
         scene = parse_scene(read_json(args.scenario))

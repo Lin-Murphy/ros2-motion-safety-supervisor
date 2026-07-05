@@ -1,0 +1,472 @@
+{
+  "cases": [
+    {
+      "id": "id_clear_01",
+      "split": "in_distribution",
+      "purpose": "clear straight motion",
+      "action": {
+        "type": "drive",
+        "vx": 0.2,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 1.0
+      },
+      "scene": {
+        "pose": {
+          "x": -0.8,
+          "y": -0.5,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.05,
+        "velocity_scale": 1.0,
+        "max_angular_accel": 1.5,
+        "max_linear_accel": 0.8
+      }
+    },
+    {
+      "id": "id_clear_02",
+      "split": "in_distribution",
+      "purpose": "clear turning motion",
+      "action": {
+        "type": "drive",
+        "vx": 0.18,
+        "vy": 0.0,
+        "wz": 0.3,
+        "duration_s": 1.2
+      },
+      "scene": {
+        "pose": {
+          "x": -0.8,
+          "y": 0.4,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.05,
+        "velocity_scale": 1.0,
+        "max_angular_accel": 1.5,
+        "max_linear_accel": 0.8
+      }
+    },
+    {
+      "id": "id_near_obstacle_01",
+      "split": "in_distribution",
+      "purpose": "near but clear obstacle",
+      "action": {
+        "type": "drive",
+        "vx": 0.22,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 1.0
+      },
+      "scene": {
+        "pose": {
+          "x": -0.8,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [
+          {
+            "x": 0.9,
+            "y": 0.55,
+            "radius": 0.1
+          }
+        ],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.05,
+        "velocity_scale": 1.0,
+        "max_angular_accel": 1.5,
+        "max_linear_accel": 0.8
+      }
+    },
+    {
+      "id": "id_obstacle_01",
+      "split": "in_distribution",
+      "purpose": "direct obstacle collision",
+      "action": {
+        "type": "drive",
+        "vx": 0.35,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 1.5
+      },
+      "scene": {
+        "pose": {
+          "x": -0.2,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [
+          {
+            "x": 0.35,
+            "y": 0.0,
+            "radius": 0.1
+          }
+        ],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.05,
+        "velocity_scale": 1.0,
+        "max_angular_accel": 1.5,
+        "max_linear_accel": 0.8
+      }
+    },
+    {
+      "id": "shift_delay_01",
+      "split": "parameter_shift",
+      "purpose": "long command delay",
+      "action": {
+        "type": "drive",
+        "vx": 0.35,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 1.5
+      },
+      "scene": {
+        "pose": {
+          "x": -0.6,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [
+          {
+            "x": 0.35,
+            "y": 0.0,
+            "radius": 0.1
+          }
+        ],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.25,
+        "velocity_scale": 1.0,
+        "max_angular_accel": 1.5,
+        "max_linear_accel": 0.4
+      }
+    },
+    {
+      "id": "shift_accel_01",
+      "split": "parameter_shift",
+      "purpose": "slow acceleration",
+      "action": {
+        "type": "drive",
+        "vx": 0.4,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 1.2
+      },
+      "scene": {
+        "pose": {
+          "x": -0.8,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [
+          {
+            "x": 0.25,
+            "y": 0.0,
+            "radius": 0.08
+          }
+        ],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.1,
+        "velocity_scale": 1.0,
+        "max_angular_accel": 1.5,
+        "max_linear_accel": 0.25
+      }
+    },
+    {
+      "id": "shift_scale_01",
+      "split": "parameter_shift",
+      "purpose": "high velocity tracking near clearance boundary",
+      "action": {
+        "type": "drive",
+        "vx": 0.28,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 1.5
+      },
+      "scene": {
+        "pose": {
+          "x": -0.7,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [
+          {
+            "x": 0.06,
+            "y": 0.0,
+            "radius": 0.1
+          }
+        ],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.05,
+        "velocity_scale": 1.4,
+        "max_angular_accel": 1.5,
+        "max_linear_accel": 0.8
+      }
+    },
+    {
+      "id": "shift_turn_01",
+      "split": "parameter_shift",
+      "purpose": "turning with low angular acceleration",
+      "action": {
+        "type": "drive",
+        "vx": 0.25,
+        "vy": 0.0,
+        "wz": 0.75,
+        "duration_s": 1.5
+      },
+      "scene": {
+        "pose": {
+          "x": -0.7,
+          "y": -0.3,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [
+          {
+            "x": 0.0,
+            "y": 0.25,
+            "radius": 0.12
+          }
+        ],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.1,
+        "velocity_scale": 1.0,
+        "max_angular_accel": 0.35,
+        "max_linear_accel": 0.6
+      }
+    },
+    {
+      "id": "scene_offset_01",
+      "split": "scene_shift",
+      "purpose": "obstacle offset from training layout",
+      "action": {
+        "type": "drive",
+        "vx": 0.34,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 1.8
+      },
+      "scene": {
+        "pose": {
+          "x": -0.7,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [
+          {
+            "x": 0.25,
+            "y": 0.18,
+            "radius": 0.1
+          }
+        ],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.12,
+        "velocity_scale": 1.0,
+        "max_angular_accel": 1.0,
+        "max_linear_accel": 0.6
+      }
+    },
+    {
+      "id": "scene_arc_01",
+      "split": "scene_shift",
+      "purpose": "arc approaching an offset obstacle",
+      "action": {
+        "type": "drive",
+        "vx": 0.24,
+        "vy": 0.0,
+        "wz": 0.85,
+        "duration_s": 1.6
+      },
+      "scene": {
+        "pose": {
+          "x": -0.7,
+          "y": -0.45,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [
+          {
+            "x": -0.1,
+            "y": 0.0,
+            "radius": 0.1
+          }
+        ],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.12,
+        "velocity_scale": 1.0,
+        "max_angular_accel": 0.8,
+        "max_linear_accel": 0.6
+      }
+    },
+    {
+      "id": "stress_scale_01",
+      "split": "stress_test",
+      "purpose": "high execution speed crosses clearance boundary",
+      "action": {
+        "type": "drive",
+        "vx": 0.3,
+        "vy": 0.0,
+        "wz": 0.0,
+        "duration_s": 2.0
+      },
+      "scene": {
+        "pose": {
+          "x": -0.7,
+          "y": 0.0,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [
+          {
+            "x": 0.35,
+            "y": 0.0,
+            "radius": 0.1
+          }
+        ],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.05,
+        "velocity_scale": 1.8,
+        "max_angular_accel": 1.5,
+        "max_linear_accel": 0.8
+      }
+    },
+    {
+      "id": "stress_scale_02",
+      "split": "stress_test",
+      "purpose": "high speed turning",
+      "action": {
+        "type": "drive",
+        "vx": 0.28,
+        "vy": 0.0,
+        "wz": 0.7,
+        "duration_s": 1.8
+      },
+      "scene": {
+        "pose": {
+          "x": -0.7,
+          "y": -0.2,
+          "yaw": 0.0
+        },
+        "bounds": {
+          "min_x": -2.0,
+          "max_x": 2.0,
+          "min_y": -1.2,
+          "max_y": 1.2
+        },
+        "obstacles": [
+          {
+            "x": 0.0,
+            "y": 0.15,
+            "radius": 0.1
+          }
+        ],
+        "observation_age_s": 0.1,
+        "max_observation_age_s": 1.0
+      },
+      "reference_config": {
+        "command_delay_s": 0.1,
+        "velocity_scale": 1.25,
+        "max_angular_accel": 0.7,
+        "max_linear_accel": 0.5
+      }
+    }
+  ]
+}

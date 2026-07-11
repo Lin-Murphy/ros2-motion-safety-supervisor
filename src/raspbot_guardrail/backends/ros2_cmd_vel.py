@@ -23,6 +23,7 @@ class TwistCommand:
     linear_y: float
     angular_z: float
     duration_s: float
+    issued_at_s: float | None = None
 
     def to_dict(self) -> dict[str, float | str]:
         return asdict(self)

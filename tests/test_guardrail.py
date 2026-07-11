@@ -20,6 +20,7 @@ from raspbot_guardrail.research_evaluation import run_research_evaluation
 from raspbot_guardrail.gateway import MotionSafetySupervisor
 from raspbot_guardrail.recorders import InMemoryEventRecorder
 from raspbot_guardrail.sources import ReplayActionSource
+from raspbot_guardrail.watchdog import OdomSample, RuntimeWatchdog, WatchdogState
 from raspbot_guardrail.scenario import parse_scene
 
 
@@ -368,6 +369,42 @@ class GuardrailTests(unittest.TestCase):
         self.assertEqual(result.decision, Decision.APPROVED)
         self.assertEqual(len(recorder.recorded_events), 1)
         self.assertEqual(backend.name, "dry_run_cmd_vel")
+
+    def test_runtime_watchdog_holds_stale_command_and_mismatched_odom(self) -> None:
+        command = zero_twist(duration_s=0.2, topic="/cmd_vel")
+        stale = RuntimeWatchdog().check(
+            type(command)(**{**command.to_dict(), "issued_at_s": 0.0}),
+            OdomSample(0.9, 0.0, 0.0, 0.0),
+            now_s=1.0,
+        )
+        self.assertEqual(stale.state, WatchdogState.HOLD)
+        self.assertEqual(stale.faults[0].code, "command_stale")
+
+        mismatch = RuntimeWatchdog().check(
+            type(command)(**{**command.to_dict(), "issued_at_s": 1.0}),
+            OdomSample(1.0, 0.8, 0.0, 0.0),
+            now_s=1.1,
+        )
+        self.assertEqual(mismatch.state, WatchdogState.HOLD)
+        self.assertEqual(mismatch.faults[0].code, "odom_command_mismatch")
+
+    def test_backend_unavailable_becomes_unknown_fault(self) -> None:
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.2, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}}
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": -0.8, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [],
+        })
+        backend = DryRunCommandBackend(available_state=False)
+        result = GuardedCmdVelExecutor(backend=backend).execute("backend_failure", actions, scene)
+
+        self.assertEqual(result.decision, Decision.RISK_UNKNOWN)
+        self.assertEqual(result.faults[0]["code"], "backend_exception")
 
 
 if __name__ == "__main__":

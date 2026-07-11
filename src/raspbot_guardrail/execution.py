@@ -18,9 +18,10 @@ from .backends.ros2_cmd_vel import (
 )
 from .backends.command import DryRunCommandBackend
 from .episode import Episode
+from .faults import Fault
 from .policy import Decision
 from .predictor import Scene
-from .replay import ReplayEngine
+from .replay import ReplayEngine, ReplayResult
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,7 @@ class GuardedExecutionResult:
     topic: str
     episode: Episode
     published_commands: list[TwistCommand]
+    faults: list[dict[str, str]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -39,6 +41,7 @@ class GuardedExecutionResult:
             "backend": self.backend,
             "topic": self.topic,
             "published_commands": [command.to_dict() for command in self.published_commands],
+            "faults": self.faults or [],
             "guardrail": {
                 "name": self.episode.name,
                 "predictor": self.episode.metadata.get("predictor", "unknown"),
@@ -81,28 +84,45 @@ class GuardedCmdVelExecutor:
     def execute(self, name: str, actions: list[TypedAction], scene: Scene) -> GuardedExecutionResult:
         replay = self.engine.run(name, actions, scene)
         published: list[TwistCommand] = []
+        faults: list[dict[str, str]] = []
 
-        if replay.final_decision == Decision.APPROVED:
-            for action in actions:
-                for command in action_to_twist_commands(action, topic=self.topic):
-                    self.backend.publish(command)
-                    published.append(command)
-            if not published or not _is_zero_velocity(published[-1]):
-                terminal_stop = zero_twist(duration_s=self.stop_duration_s, topic=self.topic)
-                self.backend.publish(terminal_stop)
-                published.append(terminal_stop)
-        else:
-            hold_command = zero_twist(duration_s=self.stop_duration_s, topic=self.topic)
-            self.backend.hold(duration_s=self.stop_duration_s)
-            published.append(hold_command)
+        try:
+            if not self.backend.available():
+                raise RuntimeError("command backend unavailable")
+            if replay.final_decision == Decision.APPROVED:
+                for action in actions:
+                    for command in action_to_twist_commands(action, topic=self.topic):
+                        self.backend.publish(command)
+                        published.append(command)
+                if not published or not _is_zero_velocity(published[-1]):
+                    terminal_stop = zero_twist(duration_s=self.stop_duration_s, topic=self.topic)
+                    self.backend.publish(terminal_stop)
+                    published.append(terminal_stop)
+            else:
+                hold_command = zero_twist(duration_s=self.stop_duration_s, topic=self.topic)
+                self.backend.hold(duration_s=self.stop_duration_s)
+                published.append(hold_command)
+        except Exception as exc:  # noqa: BLE001 - backend is a fault boundary.
+            fault = Fault("backend_exception", self.backend.name, str(exc))
+            faults.append(fault.to_dict())
+            replay = ReplayResult(replay.episode, Decision.RISK_UNKNOWN)
+            published = []
+            try:
+                hold_command = zero_twist(duration_s=self.stop_duration_s, topic=self.topic)
+                if self.backend.available():
+                    self.backend.hold(duration_s=self.stop_duration_s)
+                    published.append(hold_command)
+            except Exception as hold_exc:  # noqa: BLE001 - record failed fallback.
+                faults.append(Fault("hold_failed", self.backend.name, str(hold_exc)).to_dict())
 
         return GuardedExecutionResult(
             decision=replay.final_decision,
-            reason=_execution_reason(replay.episode, replay.final_decision),
+            reason="backend fault; zero-velocity hold requested" if faults else _execution_reason(replay.episode, replay.final_decision),
             backend="dry_run_cmd_vel",
             topic=self.topic,
             episode=replay.episode,
             published_commands=published,
+            faults=faults,
         )
 
 

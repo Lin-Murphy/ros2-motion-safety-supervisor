@@ -141,6 +141,8 @@ python -m unittest discover tests
   and risk prediction.
 - `src/raspbot_guardrail/reference_execution.py`: independent offline execution
   model for future benchmark ground truth.
+- `src/raspbot_guardrail/learned_risk.py`: experimental structured learned-risk
+  predictor using the common predictor contract.
 - `src/raspbot_guardrail/predictors/`: predictor interface and registry for
   future learned/world-model predictors.
 - `src/raspbot_guardrail/evaluation.py`: manifest-driven evaluation harness.
@@ -162,6 +164,7 @@ python -m unittest discover tests
 - `docs/evaluation-benchmark.md`: the V1 case taxonomy and benchmark scope.
 - `docs/reference-execution-model.md`: the independent execution model used for
   future ground-truth labels.
+- `docs/learned-risk-predictor.md`: learned predictor boundary and seed results.
 - `docs/prediction-model.md`: the V1 rollout equations, clearance check, and
   trace output.
 - `docs/problem-definition.md`: research question, safety metrics, and scope

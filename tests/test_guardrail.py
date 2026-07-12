@@ -18,6 +18,7 @@ from raspbot_guardrail.replay import ReplayEngine
 from raspbot_guardrail.research_benchmark import generate_research_benchmark
 from raspbot_guardrail.research_evaluation import run_research_evaluation
 from raspbot_guardrail.gateway import MotionSafetySupervisor
+from raspbot_guardrail.learned_risk import LearnedRiskPredictor, build_default_learned_predictor
 from raspbot_guardrail.recorders import InMemoryEventRecorder
 from raspbot_guardrail.sources import ReplayActionSource
 from raspbot_guardrail.watchdog import OdomSample, RuntimeWatchdog, WatchdogState
@@ -114,6 +115,7 @@ class GuardrailTests(unittest.TestCase):
 
     def test_predictor_registry_builds_kinematic_predictor(self) -> None:
         self.assertIn("kinematic", available_predictors())
+        self.assertIn("learned_risk", available_predictors())
         predictor = build_predictor("kinematic")
         self.assertEqual(type(predictor).__name__, "KinematicRiskPredictor")
 
@@ -405,6 +407,25 @@ class GuardrailTests(unittest.TestCase):
 
         self.assertEqual(result.decision, Decision.RISK_UNKNOWN)
         self.assertEqual(result.faults[0]["code"], "backend_exception")
+
+    def test_learned_risk_predictor_uses_common_contract(self) -> None:
+        predictor = build_default_learned_predictor()
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.2, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}}
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": -0.8, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [],
+        })
+        result = predictor.predict(scene, actions[0])
+
+        self.assertIn(result.decision, {Decision.APPROVED, Decision.REJECTED})
+        self.assertEqual(result.model_trace["model"], "learned_risk_logistic_v1")
+        self.assertIn("risk_probability", result.model_trace)
 
 
 if __name__ == "__main__":

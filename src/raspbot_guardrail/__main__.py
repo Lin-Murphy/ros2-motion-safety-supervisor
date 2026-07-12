@@ -37,6 +37,7 @@ def main() -> None:
     research_evaluate = sub.add_parser("research-evaluate", help="evaluate a predictor against the independent research benchmark")
     research_evaluate.add_argument("--json", type=Path, default=Path("reports/research_evaluation.json"))
     research_evaluate.add_argument("--markdown", type=Path, default=Path("reports/research_evaluation.md"))
+    research_evaluate.add_argument("--predictor", choices=available_predictors(), default="kinematic")
 
     dry_run = sub.add_parser("dry-run", help="run guardrail and emit generic ROS2 cmd_vel commands")
     dry_run.add_argument("plan", type=Path)
@@ -89,7 +90,10 @@ def main() -> None:
         print(f"published_commands={len(result.published_commands)}")
         print(f"output={args.output}")
     elif args.command == "research-evaluate":
-        summary = run_research_evaluation()
+        summary = run_research_evaluation(
+            predictor=build_predictor(args.predictor),
+            predictor_name=args.predictor,
+        )
         write_research_evaluation_json(args.json, summary)
         write_research_evaluation_markdown(args.markdown, summary)
         print(f"dangerous_false_negatives={summary.dangerous_false_negatives}/{summary.dangerous_cases}")

@@ -12,7 +12,14 @@ PredictorFactory = Callable[[], Predictor]
 
 _REGISTRY: dict[str, PredictorFactory] = {
     "kinematic": KinematicRiskPredictor,
+    "learned_risk": lambda: _build_learned_risk(),
 }
+
+
+def _build_learned_risk() -> Predictor:
+    from ..learned_risk import build_default_learned_predictor
+
+    return build_default_learned_predictor()
 
 
 def available_predictors() -> tuple[str, ...]:
@@ -20,6 +27,8 @@ def available_predictors() -> tuple[str, ...]:
 
 
 def build_predictor(name: str) -> Predictor:
+    if name == "learned_risk" and name not in _REGISTRY:
+        _REGISTRY[name] = _build_learned_risk
     try:
         return _REGISTRY[name]()
     except KeyError as exc:
@@ -33,4 +42,3 @@ def register_predictor(name: str, factory: PredictorFactory) -> None:
     if name in _REGISTRY:
         raise ValueError(f"predictor {name!r} is already registered")
     _REGISTRY[name] = factory
-

@@ -143,6 +143,8 @@ python -m unittest discover tests
   model for future benchmark ground truth.
 - `src/raspbot_guardrail/learned_risk.py`: experimental structured learned-risk
   predictor using the common predictor contract.
+- `src/raspbot_guardrail/fusion.py`: conservative multi-predictor decision
+  evidence layer.
 - `src/raspbot_guardrail/predictors/`: predictor interface and registry for
   future learned/world-model predictors.
 - `src/raspbot_guardrail/evaluation.py`: manifest-driven evaluation harness.
@@ -165,6 +167,7 @@ python -m unittest discover tests
 - `docs/reference-execution-model.md`: the independent execution model used for
   future ground-truth labels.
 - `docs/learned-risk-predictor.md`: learned predictor boundary and seed results.
+- `docs/conservative-fusion.md`: fusion rules and current safety/usability trade-off.
 - `docs/prediction-model.md`: the V1 rollout equations, clearance check, and
   trace output.
 - `docs/problem-definition.md`: research question, safety metrics, and scope

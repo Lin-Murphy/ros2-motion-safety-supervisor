@@ -18,6 +18,7 @@ from raspbot_guardrail.replay import ReplayEngine
 from raspbot_guardrail.research_benchmark import generate_research_benchmark
 from raspbot_guardrail.research_evaluation import run_research_evaluation
 from raspbot_guardrail.gateway import MotionSafetySupervisor
+from raspbot_guardrail.fusion import ConservativeFusionPredictor
 from raspbot_guardrail.learned_risk import LearnedRiskPredictor, build_default_learned_predictor
 from raspbot_guardrail.recorders import InMemoryEventRecorder
 from raspbot_guardrail.sources import ReplayActionSource
@@ -426,6 +427,32 @@ class GuardrailTests(unittest.TestCase):
         self.assertIn(result.decision, {Decision.APPROVED, Decision.REJECTED})
         self.assertEqual(result.model_trace["model"], "learned_risk_logistic_v1")
         self.assertIn("risk_probability", result.model_trace)
+
+    def test_conservative_fusion_never_overrules_rejection(self) -> None:
+        class ApprovePredictor:
+            def predict(self, scene, action):
+                return build_predictor("kinematic").predict(scene, action)
+
+        class RejectPredictor:
+            def predict(self, scene, action):
+                result = build_predictor("kinematic").predict(scene, action)
+                return type(result)(Decision.REJECTED, "synthetic rejection", result.trajectory, result.min_clearance, {"model": "reject"})
+
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.2, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}}
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": -0.8, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [],
+        })
+        result = ConservativeFusionPredictor((("approve", ApprovePredictor()), ("reject", RejectPredictor()))).predict(scene, actions[0])
+
+        self.assertEqual(result.decision, Decision.REJECTED)
+        self.assertEqual(result.model_trace["model"], "conservative_fusion_v1")
 
 
 if __name__ == "__main__":

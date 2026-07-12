@@ -10,16 +10,26 @@ from .base import Predictor
 
 PredictorFactory = Callable[[], Predictor]
 
-_REGISTRY: dict[str, PredictorFactory] = {
-    "kinematic": KinematicRiskPredictor,
-    "learned_risk": lambda: _build_learned_risk(),
-}
-
 
 def _build_learned_risk() -> Predictor:
     from ..learned_risk import build_default_learned_predictor
 
     return build_default_learned_predictor()
+
+
+def _build_fusion() -> Predictor:
+    from ..fusion import ConservativeFusionPredictor
+
+    return ConservativeFusionPredictor((
+        ("kinematic", KinematicRiskPredictor()),
+        ("learned_risk", _build_learned_risk()),
+    ))
+
+_REGISTRY: dict[str, PredictorFactory] = {
+    "kinematic": KinematicRiskPredictor,
+    "learned_risk": lambda: _build_learned_risk(),
+    "fusion": lambda: _build_fusion(),
+}
 
 
 def available_predictors() -> tuple[str, ...]:

@@ -21,6 +21,7 @@ from .episode import Episode
 from .faults import Fault
 from .policy import Decision
 from .predictor import Scene
+from .ports import CommandBackend
 from .replay import ReplayEngine, ReplayResult
 
 
@@ -71,13 +72,13 @@ class GuardedCmdVelExecutor:
         self,
         engine: ReplayEngine | None = None,
         publisher: CmdVelPublisher | None = None,
-        backend: DryRunCommandBackend | None = None,
+        backend: CommandBackend | None = None,
         topic: str = DEFAULT_CMD_VEL_TOPIC,
         stop_duration_s: float = 0.2,
     ) -> None:
         self.engine = engine or ReplayEngine()
         self.backend = backend or DryRunCommandBackend(topic=topic, publisher=publisher or DryRunCmdVelPublisher(topic=topic))
-        self.publisher = publisher or self.backend.publisher
+        self.publisher = publisher
         self.topic = topic
         self.stop_duration_s = stop_duration_s
 

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>clear_drive replay report</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 32px; line-height: 1.45; }
+    .panel { border: 1px solid #d0d0d0; padding: 16px; margin: 20px 0; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .metric { border: 1px solid #d8d8d8; background: #fafafa; padding: 12px; }
+    .metric-label { color: #555; font-size: 12px; text-transform: uppercase; }
+    .metric-value { margin-top: 6px; font-weight: 700; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f2f2f2; }
+    code { background: #f6f6f6; padding: 2px 4px; }
+    pre { background: #f6f6f6; padding: 12px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>clear_drive replay report</h1>
+  <section class="panel">
+    <h2>Decision Summary</h2>
+    <div class="summary-grid"><div class="metric"><div class="metric-label">Final decision</div><div class="metric-value"><code>APPROVED</code></div></div>
+<div class="metric"><div class="metric-label">Reason</div><div class="metric-value">all predictors approved the action</div></div>
+<div class="metric"><div class="metric-label">Predictor</div><div class="metric-value"><code>fusion</code></div></div>
+<div class="metric"><div class="metric-label">Evidence label</div><div class="metric-value"><code>offline_simulated</code></div></div>
+<div class="metric"><div class="metric-label">Risk trigger</div><div class="metric-value"><code>none</code></div></div>
+<div class="metric"><div class="metric-label">Min clearance</div><div class="metric-value">0.250</div></div>
+<div class="metric"><div class="metric-label">ROS2 command policy</div><div class="metric-value">approved actions may pass to the generic /cmd_vel adapter, followed by a terminal stop</div></div></div>
+  </section>
+  <section class="panel">
+    <h2>Predicted 2D Trajectory</h2>
+    <svg viewBox="0 0 640 360" width="640" height="360" role="img" aria-label="Predicted trajectory">
+<rect x="28" y="28" width="584" height="304" fill="#fff" stroke="#333" />
+<circle cx="466.0" cy="180.0" r="23.4" fill="#f8d7da" stroke="#b00020" />
+<circle cx="320.0" cy="180.0" r="5" fill="#111" />
+<text x="328.0" y="172.0" font-size="12">start</text>
+<polyline points="323.9,180.0 327.8,180.0 331.7,180.0 335.6,180.0 339.5,180.0 343.4,180.0 347.3,180.0 351.1,180.0 355.0,180.0 358.9,180.0" fill="none" stroke="#0a7f3f" stroke-width="3" />
+<circle cx="358.9" cy="180.0" r="4" fill="#0a7f3f" />
+<polyline points="358.9,180.0" fill="none" stroke="#0a7f3f" stroke-width="3" />
+<circle cx="358.9" cy="180.0" r="4" fill="#0a7f3f" />
+<text x="28" y="350" font-size="12">Trajectory uses normalized V1 command units.</text>
+</svg>
+  </section>
+  <section class="panel">
+    <h2>Decision Path</h2>
+    <h3>Event #0: drive</h3>
+<ol>
+<li><strong>static_policy</strong>: <code>APPROVED</code> - static drive policy passed</li>
+<li><strong>prediction</strong>: <code>APPROVED</code> - all predictors approved the action</li>
+<li><strong>final</strong>: <code>APPROVED</code> - all predictors approved the action</li>
+</ol>
+<h3>Event #1: stop</h3>
+<ol>
+<li><strong>static_policy</strong>: <code>APPROVED</code> - static non-drive policy passed</li>
+<li><strong>prediction</strong>: <code>APPROVED</code> - all predictors approved the action</li>
+<li><strong>final</strong>: <code>APPROVED</code> - all predictors approved the action</li>
+</ol>
+  </section>
+  <section class="panel">
+    <h2>Prediction Trace</h2>
+    <h3>Event #0: drive</h3>
+<pre>{
+  &quot;model&quot;: &quot;conservative_fusion_v1&quot;,
+  &quot;risk_trigger&quot;: null,
+  &quot;predictors&quot;: [
+    {
+      &quot;name&quot;: &quot;kinematic&quot;,
+      &quot;decision&quot;: &quot;APPROVED&quot;,
+      &quot;reason&quot;: &quot;predicted path stays within scene constraints&quot;,
+      &quot;risk_probability&quot;: null
+    },
+    {
+      &quot;name&quot;: &quot;learned_risk&quot;,
+      &quot;decision&quot;: &quot;APPROVED&quot;,
+      &quot;reason&quot;: &quot;learned risk probability 0.209 stays below threshold&quot;,
+      &quot;risk_probability&quot;: 0.20947329385279395
+    }
+  ]
+}</pre>
+<h3>Event #1: stop</h3>
+<pre>{
+  &quot;model&quot;: &quot;conservative_fusion_v1&quot;,
+  &quot;risk_trigger&quot;: null,
+  &quot;predictors&quot;: [
+    {
+      &quot;name&quot;: &quot;kinematic&quot;,
+      &quot;decision&quot;: &quot;APPROVED&quot;,
+      &quot;reason&quot;: &quot;non-drive action has no motion risk&quot;,
+      &quot;risk_probability&quot;: null
+    },
+    {
+      &quot;name&quot;: &quot;learned_risk&quot;,
+      &quot;decision&quot;: &quot;APPROVED&quot;,
+      &quot;reason&quot;: &quot;non-drive action has no learned motion risk&quot;,
+      &quot;risk_probability&quot;: 0.0
+    }
+  ]
+}</pre>
+  </section>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Action</th>
+        <th>Static</th>
+        <th>Predictive</th>
+        <th>Final</th>
+        <th>Reason</th>
+        <th>Min clearance</th>
+      </tr>
+    </thead>
+    <tbody><tr><td>0</td><td>drive</td><td>APPROVED</td><td>APPROVED</td><td>APPROVED</td><td>all predictors approved the action</td><td>0.250</td></tr>
+<tr><td>1</td><td>stop</td><td>APPROVED</td><td>APPROVED</td><td>APPROVED</td><td>all predictors approved the action</td><td></td></tr></tbody>
+  </table>
+</body>
+</html>

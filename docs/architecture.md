@@ -32,10 +32,10 @@ adapter concern.
 | `CommandBackend` | Convert an approved action into an execution-side command. | Re-run safety policy. |
 | `EventRecorder` | Persist structured decisions, faults, and execution outcomes. | Change the decision after recording it. |
 
-The current `ReplayEngine`, predictor registry, dry-run executor, and ROS2
-`/cmd_vel` boundary are the first implementation of these responsibilities.
-The next architecture changes should introduce explicit contracts gradually,
-without breaking the current replay and benchmark APIs.
+The current `ReplayEngine`, `MotionSafetySupervisor`, predictor registry,
+dry-run executor, runtime watchdog, event recorder, and ROS2 `/cmd_vel` boundary
+implement these responsibilities. The research benchmark remains an adapter
+around the same predictor contract.
 
 ## Decision and Failure Semantics
 

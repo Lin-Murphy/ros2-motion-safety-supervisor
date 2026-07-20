@@ -6,6 +6,7 @@ from raspbot_guardrail.actions import parse_plan
 from raspbot_guardrail.decision_arbiter import DecisionArbiter
 from raspbot_guardrail.backends.command import DryRunCommandBackend
 from raspbot_guardrail.backends.ros2_cmd_vel import zero_twist
+from raspbot_guardrail.backends.ros2_runtime import Ros2CmdVelBackend
 from raspbot_guardrail.evaluation import run_evaluation
 from raspbot_guardrail.execution import GuardedCmdVelExecutor
 from raspbot_guardrail.explanation import format_explanation
@@ -408,6 +409,15 @@ class GuardrailTests(unittest.TestCase):
 
         self.assertEqual(result.decision, Decision.RISK_UNKNOWN)
         self.assertEqual(result.faults[0]["code"], "backend_exception")
+
+    def test_ros2_runtime_backend_keeps_core_message_agnostic(self) -> None:
+        published = []
+        backend = Ros2CmdVelBackend(published.append)
+        backend.publish(zero_twist(topic="/safe_cmd_vel"))
+
+        self.assertEqual(len(published), 1)
+        self.assertEqual(published[0].topic, "/safe_cmd_vel")
+        self.assertTrue(backend.available())
 
     def test_learned_risk_predictor_uses_common_contract(self) -> None:
         predictor = build_default_learned_predictor()

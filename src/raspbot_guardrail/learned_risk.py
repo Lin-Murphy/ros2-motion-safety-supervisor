@@ -121,9 +121,9 @@ class LearnedRiskPredictor:
 
 
 def build_default_learned_predictor() -> LearnedRiskPredictor:
-    from .research_benchmark import generate_research_benchmark
+    from .research_benchmark import generate_expanded_research_benchmark
 
-    cases = tuple(case for case in generate_research_benchmark() if case.split == "in_distribution")
+    cases = tuple(case for case in generate_expanded_research_benchmark() if case.split == "train")
     return LearnedRiskPredictor.fit(cases)
 
 

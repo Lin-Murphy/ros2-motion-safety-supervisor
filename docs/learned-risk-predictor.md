@@ -19,11 +19,12 @@ the learned component estimates risk rather than owning execution.
 
 ## Training Boundary
 
-The default research model is fitted from the `in_distribution` seed cases and
-uses outcomes produced by the independent reference execution model. The
-remaining benchmark cases are used to expose distribution and execution
-mismatch behaviour. This is a small offline experiment, not a statistically
-sufficient training study.
+The default research model is fitted from the 40-case `train` split of the
+expanded benchmark and uses outcomes produced by the independent reference
+execution model. The `validation`, `test_parameter_shift`, `test_scene_shift`,
+and `test_stress` cases are held out from fitting and expose distribution and
+execution mismatch behaviour. This remains a controlled offline experiment,
+not a statistically sufficient training study.
 
 ## Current Seed Result
 

@@ -49,6 +49,20 @@ class ResearchEvaluationSummary:
     def unknown_rate(self) -> float:
         return self.unknown_cases / self.total if self.total else 0.0
 
+    def split_summary(self) -> dict[str, dict[str, int]]:
+        summary: dict[str, dict[str, int]] = {}
+        for split in sorted({case.split for case in self.cases}):
+            selected = [case for case in self.cases if case.split == split]
+            dangerous = sum(case.reference_outcome in {ReferenceOutcome.COLLISION, ReferenceOutcome.BOUNDARY_VIOLATION} for case in selected)
+            summary[split] = {
+                "cases": len(selected),
+                "dangerous_cases": dangerous,
+                "dangerous_false_negatives": sum(case.dangerous_false_negative for case in selected),
+                "false_rejects": sum(case.false_reject for case in selected),
+                "unknown_cases": sum(case.unknown for case in selected),
+            }
+        return summary
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "predictor": self.predictor,
@@ -60,6 +74,7 @@ class ResearchEvaluationSummary:
             "false_reject_rate": self.false_reject_rate,
             "unknown_cases": self.unknown_cases,
             "unknown_rate": self.unknown_rate,
+            "splits": self.split_summary(),
             "cases": [asdict(case) for case in self.cases],
         }
 
@@ -152,10 +167,25 @@ def write_research_evaluation_markdown(path: Path, summary: ResearchEvaluationSu
     lines.extend(
         [
             "",
+            "## Split Summary",
+            "",
+            "| Split | Cases | Dangerous | Dangerous FN | False rejects | Unknown |",
+            "| --- | ---: | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for split, metrics in summary.split_summary().items():
+        lines.append(
+            f"| {split} | {metrics['cases']} | {metrics['dangerous_cases']} | "
+            f"{metrics['dangerous_false_negatives']} | {metrics['false_rejects']} | "
+            f"{metrics['unknown_cases']} |"
+        )
+    lines.extend(
+        [
+            "",
             "## Interpretation",
             "",
             "Ground truth comes from the independent reference execution model.",
-            "This is an offline seed benchmark, not hardware validation or a", 
+            "This is a controlled offline benchmark, not hardware validation or a",
             "statistically sufficient generalization study.",
         ]
     )

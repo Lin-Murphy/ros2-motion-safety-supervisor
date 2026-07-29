@@ -64,6 +64,29 @@ def generate_research_benchmark() -> tuple[ResearchBenchmarkCase, ...]:
     return tuple(cases)
 
 
+def generate_expanded_research_benchmark() -> tuple[ResearchBenchmarkCase, ...]:
+    """Return a larger deterministic benchmark with held-out scenario families.
+
+    Cases are generated from disjoint parameter ranges rather than randomly
+    shuffled rows. This makes the held-out splits useful for testing whether a
+    predictor transfers across execution and scene changes.
+    """
+
+    bounds = Bounds(-2.0, 2.0, -1.2, 1.2)
+    cases: list[ResearchBenchmarkCase] = []
+    split_sizes = {
+        "train": 40,
+        "validation": 16,
+        "test_parameter_shift": 16,
+        "test_scene_shift": 16,
+        "test_stress": 12,
+    }
+    for split, size in split_sizes.items():
+        for index in range(size):
+            cases.append(_generated_case(split, index, bounds))
+    return tuple(cases)
+
+
 def write_benchmark_cases(path: Path, cases: tuple[ResearchBenchmarkCase, ...] | None = None) -> None:
     selected = cases or generate_research_benchmark()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -96,4 +119,55 @@ def _case(
         action=action,
         scene=Scene(pose, bounds, obstacles, observation_age_s=0.1),
         reference_config=reference_config,
+    )
+
+
+def _generated_case(split: str, index: int, bounds: Bounds) -> ResearchBenchmarkCase:
+    profiles = (
+        (0.18, 0.00, 0.00, 0.9),
+        (0.26, 0.00, 0.00, 1.2),
+        (0.22, 0.00, 0.35, 1.3),
+        (0.30, 0.00, 0.60, 1.4),
+    )
+    vx, vy, wz, duration_s = profiles[index % len(profiles)]
+    if split in {"test_parameter_shift", "test_stress"} and index % 2 == 1:
+        vx, vy, wz, duration_s = (0.35, 0.0, 0.0, 2.0)
+    start_x = -1.1 + 0.16 * (index % 5)
+    start_y = -0.45 + 0.18 * (index % 4)
+    action = DriveAction(vx, vy, wz, duration_s)
+    pose = Pose2D(start_x, start_y, 0.0)
+    travel = max(0.18, abs(vx) * duration_s * 0.75)
+    path_y = start_y + (0.35 if wz > 0.0 else 0.0)
+    is_dangerous = index % 2 == 1
+
+    if is_dangerous:
+        obstacle_x = start_x + travel
+        if split in {"test_parameter_shift", "test_stress"}:
+            # Keep the obstacle outside the nominal rollout but inside the
+            # delayed, speed-scaled reference execution.
+            obstacle_x = start_x + abs(vx) * duration_s + 0.36
+        obstacle = CircleObstacle(obstacle_x, path_y, 0.12)
+    else:
+        obstacle = CircleObstacle(start_x + travel, start_y + 0.75, 0.10)
+
+    config = _config(0.05, 1.0, 1.5, 0.8)
+    if split == "validation":
+        config = _config(0.08, 1.05, 1.2, 0.7)
+    elif split == "test_parameter_shift":
+        config = _config(0.22, 1.80, 1.2, 0.8)
+    elif split == "test_scene_shift":
+        obstacle = CircleObstacle(start_x + travel * 0.85, path_y + (0.08 if is_dangerous else 0.55), 0.12)
+        config = _config(0.12, 1.0, 1.0, 0.6)
+    elif split == "test_stress":
+        config = _config(0.28, 1.80, 1.5, 1.0)
+
+    return _case(
+        f"{split}_{index:03d}",
+        split,
+        f"generated {split} case {index}",
+        action,
+        pose,
+        bounds,
+        (obstacle,),
+        config,
     )

@@ -115,6 +115,12 @@ Run the research benchmark against the independent reference execution model:
 python -m raspbot_guardrail research-evaluate --json reports/research_evaluation.json --markdown reports/research_evaluation.md
 ```
 
+Run the expanded held-out benchmark:
+
+```bash
+python -m raspbot_guardrail research-evaluate --benchmark expanded --predictor learned_risk --json reports/expanded_learned_risk.json --markdown reports/expanded_learned_risk.md
+```
+
 Run a generic ROS2 `/cmd_vel` dry run:
 
 ```bash

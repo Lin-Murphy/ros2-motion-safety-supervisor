@@ -13,6 +13,7 @@ from .explanation import format_explanation, write_explanation
 from .predictors.registry import available_predictors, build_predictor
 from .replay import ReplayEngine
 from .report import write_html_report
+from .research_benchmark import generate_expanded_research_benchmark, generate_research_benchmark
 from .research_evaluation import run_research_evaluation, write_research_evaluation_json, write_research_evaluation_markdown
 from .scenario import parse_scene
 
@@ -38,6 +39,7 @@ def main() -> None:
     research_evaluate.add_argument("--json", type=Path, default=Path("reports/research_evaluation.json"))
     research_evaluate.add_argument("--markdown", type=Path, default=Path("reports/research_evaluation.md"))
     research_evaluate.add_argument("--predictor", choices=available_predictors(), default="kinematic")
+    research_evaluate.add_argument("--benchmark", choices=("seed", "expanded"), default="seed")
 
     dry_run = sub.add_parser("dry-run", help="run guardrail and emit generic ROS2 cmd_vel commands")
     dry_run.add_argument("plan", type=Path)
@@ -90,7 +92,9 @@ def main() -> None:
         print(f"published_commands={len(result.published_commands)}")
         print(f"output={args.output}")
     elif args.command == "research-evaluate":
+        cases = generate_research_benchmark() if args.benchmark == "seed" else generate_expanded_research_benchmark()
         summary = run_research_evaluation(
+            cases=cases,
             predictor=build_predictor(args.predictor),
             predictor_name=args.predictor,
         )

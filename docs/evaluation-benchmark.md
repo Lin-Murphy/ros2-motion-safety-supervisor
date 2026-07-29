@@ -45,9 +45,9 @@ generalization, or learned-model improvement.
 ## Research Benchmark (Next Phase)
 
 The next benchmark layer will generate cases from an independent reference
-execution model. It will vary command delay, acceleration limits, execution
-error, observation noise, and scene layout. The reference outcome will provide
-ground truth for collision, boundary violation, and minimum clearance.
+execution model. It varies command delay, acceleration limits, execution
+error, and scene layout. The reference outcome provides ground truth for
+collision, boundary violation, and minimum clearance.
 
 The initial deterministic research cases are stored in
 `benchmarks/research_cases.json` and are split into:
@@ -60,7 +60,21 @@ The initial deterministic research cases are stored in
 | `stress_test` | Large execution mismatch intended to expose optimistic predictions. |
 
 The cases are a seed benchmark, not a statistically sufficient dataset. The
-next phase will add a generator and report how many cases produce each outcome.
+expanded benchmark adds 100 deterministic generated cases with disjoint
+training, validation, and held-out test families. It is still a controlled
+offline experiment, not evidence of physical safety.
+
+The expanded benchmark can be run with:
+
+```bash
+python -m raspbot_guardrail research-evaluate --benchmark expanded --predictor kinematic
+python -m raspbot_guardrail research-evaluate --benchmark expanded --predictor learned_risk
+```
+
+The learned predictor is fitted only from the `train` split. The validation
+and test splits are never used to fit its weights. `test_parameter_shift`,
+`test_scene_shift`, and `test_stress` are held out to measure transfer across
+execution and scene changes.
 
 The current seed baseline report is `reports/research_evaluation.md`. It shows
 that the kinematic baseline can be optimistic under execution mismatch: the

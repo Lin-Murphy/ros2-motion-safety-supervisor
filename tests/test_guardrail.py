@@ -16,7 +16,7 @@ from raspbot_guardrail.predictors.registry import available_predictors, build_pr
 from raspbot_guardrail.report import write_html_report
 from raspbot_guardrail.reference_execution import ReferenceExecutionModel, ReferenceOutcome
 from raspbot_guardrail.replay import ReplayEngine
-from raspbot_guardrail.research_benchmark import generate_research_benchmark
+from raspbot_guardrail.research_benchmark import generate_expanded_research_benchmark, generate_research_benchmark
 from raspbot_guardrail.research_evaluation import run_research_evaluation
 from raspbot_guardrail.gateway import MotionSafetySupervisor
 from raspbot_guardrail.fusion import ConservativeFusionPredictor
@@ -307,6 +307,27 @@ class GuardrailTests(unittest.TestCase):
         self.assertTrue(all(case.scene.observation_age_s == 0.1 for case in first))
         self.assertTrue(all("command_delay_s" in case.reference_config for case in first))
 
+    def test_expanded_research_benchmark_has_disjoint_evaluation_splits(self) -> None:
+        first = generate_expanded_research_benchmark()
+        second = generate_expanded_research_benchmark()
+
+        self.assertEqual(first, second)
+        self.assertEqual(len(first), 100)
+        self.assertEqual(
+            {case.split: sum(item.split == case.split for item in first) for case in first},
+            {
+                "train": 40,
+                "validation": 16,
+                "test_parameter_shift": 16,
+                "test_scene_shift": 16,
+                "test_stress": 12,
+            },
+        )
+        self.assertEqual(len({case.case_id for case in first}), len(first))
+
+        predictor = build_default_learned_predictor()
+        self.assertEqual(predictor.state.training_cases, 40)
+
     def test_research_evaluation_reports_baseline_false_negatives(self) -> None:
         summary = run_research_evaluation()
 
@@ -316,6 +337,19 @@ class GuardrailTests(unittest.TestCase):
         self.assertGreater(summary.dangerous_false_negatives, 0)
         self.assertGreaterEqual(summary.false_rejects, 0)
         self.assertEqual(summary.unknown_cases, 0)
+
+    def test_expanded_research_evaluation_reports_each_split(self) -> None:
+        summary = run_research_evaluation(
+            cases=generate_expanded_research_benchmark(),
+            predictor=build_default_learned_predictor(),
+            predictor_name="learned_risk",
+        )
+
+        self.assertEqual(summary.total, 100)
+        self.assertEqual(summary.split_summary()["train"]["cases"], 40)
+        self.assertEqual(summary.split_summary()["test_parameter_shift"]["cases"], 16)
+        self.assertEqual(summary.split_summary()["test_scene_shift"]["cases"], 16)
+        self.assertEqual(summary.split_summary()["test_stress"]["cases"], 12)
 
     def test_safety_decision_engine_never_approves_missing_prediction(self) -> None:
         result = SafetyDecisionEngine().decide(

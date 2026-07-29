@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from raspbot_guardrail.actions import parse_plan
-from raspbot_guardrail.decision_arbiter import DecisionArbiter
+from raspbot_guardrail.safety_decision_engine import SafetyDecisionEngine
 from raspbot_guardrail.backends.command import DryRunCommandBackend
 from raspbot_guardrail.backends.ros2_cmd_vel import zero_twist
 from raspbot_guardrail.backends.ros2_runtime import Ros2CmdVelBackend
@@ -317,8 +317,8 @@ class GuardrailTests(unittest.TestCase):
         self.assertGreaterEqual(summary.false_rejects, 0)
         self.assertEqual(summary.unknown_cases, 0)
 
-    def test_decision_arbiter_never_approves_missing_prediction(self) -> None:
-        result = DecisionArbiter().arbitrate(
+    def test_safety_decision_engine_never_approves_missing_prediction(self) -> None:
+        result = SafetyDecisionEngine().decide(
             PolicyResult(Decision.APPROVED, "static policy passed"),
             prediction=None,
         )

@@ -5,7 +5,7 @@ experimental learned risk predictor behind the same predictor contract.
 
 ```text
 kinematic predictor ─┐
-                     ├─> conservative fusion ─> arbiter
+                     ├─> conservative fusion ─> decision engine
 learned risk model ──┘
 ```
 

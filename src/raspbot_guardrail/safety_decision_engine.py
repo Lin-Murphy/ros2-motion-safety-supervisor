@@ -1,4 +1,4 @@
-"""Conservative decision arbitration for the motion safety gateway."""
+"""Conservative decision engine for the motion safety gateway."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from .predictor import PredictionResult
 
 
 @dataclass(frozen=True)
-class ArbiterResult:
+class SafetyDecisionResult:
     decision: Decision
     reason: str
     fallback: str | None
@@ -18,20 +18,20 @@ class ArbiterResult:
     faults: list[Fault] = field(default_factory=list)
 
 
-class DecisionArbiter:
-    """Combines deterministic policy, prediction, and component faults.
+class SafetyDecisionEngine:
+    """Combines policy, prediction, and component faults.
 
-    The arbiter has no ROS2 or backend dependency. Unknown or failed evidence
+    The engine has no ROS2 or backend dependency. Unknown or failed evidence
     never becomes approval; execution layers should apply the fallback hold.
     """
 
-    def arbitrate(
+    def decide(
         self,
         policy: PolicyResult,
         prediction: PredictionResult | None = None,
         fault: Fault | None = None,
         prediction_skipped_reason: str | None = None,
-    ) -> ArbiterResult:
+    ) -> SafetyDecisionResult:
         path = [
             {
                 "stage": "static_policy",
@@ -71,13 +71,13 @@ class DecisionArbiter:
         reason: str,
         path: list[dict[str, str]],
         fault: Fault | None,
-    ) -> ArbiterResult:
+    ) -> SafetyDecisionResult:
         path.append({
             "stage": "final",
             "result": decision.value,
             "reason": reason,
         })
-        return ArbiterResult(
+        return SafetyDecisionResult(
             decision=decision,
             reason=reason,
             fallback="zero_velocity_hold" if decision != Decision.APPROVED else None,

@@ -12,7 +12,7 @@ ROS2 command source / replay input
         -> action validation
         -> PolicyEvaluator
         -> Predictor plugin(s)
-        -> DecisionArbiter
+        -> SafetyDecisionEngine
         -> EventRecorder
         -> CommandBackend
         -> approved /cmd_vel or zero-velocity hold
@@ -28,7 +28,7 @@ adapter concern.
 | `ActionSource` | Supply typed candidate actions and observation context. | Publish motor commands. |
 | `PolicyEvaluator` | Check deterministic command and plan constraints. | Perform model inference. |
 | `Predictor` | Estimate short-horizon consequences and report assumptions. | Publish `/cmd_vel` or silently approve on failure. |
-| `DecisionArbiter` | Combine policy, predictor, and fault outcomes. | Depend on a specific ROS2 driver. |
+| `SafetyDecisionEngine` | Combine policy, predictor, and fault outcomes. | Depend on a specific ROS2 driver. |
 | `CommandBackend` | Convert an approved action into an execution-side command. | Re-run safety policy. |
 | `EventRecorder` | Persist structured decisions, faults, and execution outcomes. | Change the decision after recording it. |
 
@@ -68,11 +68,11 @@ kinematic baseline
         -> independent reference execution
         -> learned action-conditioned predictor
         -> common benchmark and metrics
-        -> conservative arbiter policy
+        -> conservative decision policy
 ```
 
 The learned predictor can improve evidence, but it cannot bypass static policy,
-the arbiter, event recording, or the backend hold policy. A future world-model
+the decision engine, event recording, or the backend hold policy. A future world-model
 predictor must use the same predictor contract and evaluation boundary.
 
 ## Non-goals

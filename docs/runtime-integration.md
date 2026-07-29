@@ -7,7 +7,7 @@ safety core.
 ROS2 subscriber / command source
         -> CandidateAction
         -> MotionSafetySupervisor
-        -> DecisionArbiter
+        -> SafetyDecisionEngine
         -> Ros2CmdVelBackend
         -> geometry_msgs/msg/Twist publisher
 ```

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from .actions import TypedAction
-from .decision_arbiter import DecisionArbiter
+from .safety_decision_engine import SafetyDecisionEngine
 from .episode import Episode, ReplayEvent
 from .faults import Fault
 from .policy import Decision, StaticPolicy
@@ -26,19 +26,19 @@ class ReplayEngine:
         policy: StaticPolicy | None = None,
         predictor: Predictor | None = None,
         predictor_name: str | None = None,
-        arbiter: DecisionArbiter | None = None,
+        decision_engine: SafetyDecisionEngine | None = None,
     ) -> None:
         self.policy = policy or StaticPolicy()
         self.predictor = predictor or build_predictor("kinematic")
         self.predictor_name = predictor_name or ("custom" if predictor is not None else "kinematic")
-        self.arbiter = arbiter or DecisionArbiter()
+        self.decision_engine = decision_engine or SafetyDecisionEngine()
 
     def run(self, name: str, actions: list[TypedAction], scene: Scene) -> ReplayResult:
         events: list[ReplayEvent] = []
         active_scene = scene
         budget = self.policy.validate_plan_budget(actions)
         if budget.decision != Decision.APPROVED:
-            arbitration = self.arbiter.arbitrate(budget, prediction_skipped_reason="plan budget did not pass")
+            arbitration = self.decision_engine.decide(budget, prediction_skipped_reason="plan budget did not pass")
             event = ReplayEvent(
                 0,
                 "plan",
@@ -58,7 +58,7 @@ class ReplayEngine:
         for index, action in enumerate(actions):
             static = self.policy.validate_action(action)
             if static.decision != Decision.APPROVED:
-                arbitration = self.arbiter.arbitrate(static)
+                arbitration = self.decision_engine.decide(static)
                 final = arbitration.decision
                 events.append(
                     ReplayEvent(
@@ -83,7 +83,7 @@ class ReplayEngine:
             except Exception as exc:  # noqa: BLE001 - fault boundary must contain plugin failures.
                 fault = Fault("predictor_exception", self.predictor_name, str(exc))
                 predicted = None
-            arbitration = self.arbiter.arbitrate(static, predicted, fault=fault)
+            arbitration = self.decision_engine.decide(static, predicted, fault=fault)
             final = arbitration.decision
             trajectory = [
                 {"t": point.t, "x": point.x, "y": point.y, "yaw": point.yaw}

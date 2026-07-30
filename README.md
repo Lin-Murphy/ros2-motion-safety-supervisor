@@ -188,6 +188,8 @@ python -m unittest discover tests
 - `docs/model-integration.md`: predictor registry, learned-risk extension, and
   future world-model integration boundary.
 - `docs/ros2-cmd-vel-contract.md`: generic ROS2 mobile-base command boundary.
+- `docs/roadmap.md`: staged extension from base motion to arm and whole-body
+  motion safety.
 
 ## Evaluation Benchmark
 
@@ -211,6 +213,24 @@ The prediction layer is model-pluggable. The registry currently provides an
 interpretable `kinematic` predictor, a structured `learned_risk` predictor, and
 conservative `fusion`. Future predictors can use the same
 `predict(scene, action)` interface.
+
+## Development Direction
+
+The planned extension is from planar mobile-base commands to mobile-manipulator
+motion. The delivery order is:
+
+```text
+base motion
+    -> arm joint-space motion
+    -> 3D collision boundary
+    -> coordinated base-and-arm motion
+    -> learned and world-model plugins
+```
+
+The target is a common safety boundary for heterogeneous motion actions. The
+project will demonstrate the 3D and MoveIt extension interface without claiming
+to be a complete industrial whole-body safety system. See
+[`docs/roadmap.md`](docs/roadmap.md).
 
 ## Design FAQ
 

@@ -1,11 +1,11 @@
-# Raspbot Action Guardrail
+# ROS2 Motion Safety Supervisor
 
-A replay and evaluation pipeline for ROS2 mobile robot command safety.
+A modular and fault-aware motion safety supervisor for ROS2 mobile robots.
 
-This project implements an explicit software boundary around mobile-base
-commands. Starting from a Raspbot V2 control-chain study, it turns candidate
-actions into typed plans, validates them, predicts short-horizon risk, and
-records replayable episodes for debugging and analysis.
+This project implements an explicit software boundary between candidate robot
+actions and execution. It turns actions into typed plans, validates them,
+predicts short-horizon risk, handles missing or failed evidence conservatively,
+and records replayable episodes for debugging and analysis.
 
 The core pipeline is:
 
@@ -39,9 +39,8 @@ This project asks a narrower engineering question:
 - Marks decisions as `RISK_UNKNOWN` when required observation evidence is
   missing.
 - Converts approved actions to generic `/cmd_vel`-style dry-run commands.
-- Evaluates the guardrail against a deterministic 10-case benchmark covering
-  static limits, predicted collision, boundary violation, missing evidence, and
-  multi-action sequence risk.
+- Evaluates the guardrail against a deterministic 10-case regression benchmark
+  and a 100-case research benchmark with held-out execution and scene shifts.
 - Writes replayable JSON episodes, prediction traces, and standalone HTML
   reports.
 - Summarizes final decision, risk trigger, clearance, and ROS2 command policy in
@@ -208,34 +207,47 @@ reject a later action in the same plan.
 
 ## Model Integration
 
-The prediction layer is model-pluggable. V1 registers an interpretable
-`kinematic` predictor, and the same replay/evaluation path can later run a
-learned risk predictor or action-conditioned world model behind the same
+The prediction layer is model-pluggable. The registry currently provides an
+interpretable `kinematic` predictor, a structured `learned_risk` predictor, and
+conservative `fusion`. Future predictors can use the same
 `predict(scene, action)` interface.
+
+## Design FAQ
+
+### How is this different from Nav2 safety features?
+
+Nav2 addresses navigation and runtime velocity filtering. For example, Nav2
+Collision Monitor filters `cmd_vel` using sensor-defined safety zones, while
+Keepout Filters represent spatial restrictions in the navigation costmap.
+
+This project addresses a different boundary: it is a model-pluggable command
+gateway that validates candidate actions, predicts short-horizon consequences,
+combines model and fault results, and produces replayable evidence. It can be
+combined with Nav2 rather than replacing it:
+
+```text
+Nav2 planner/controller
+        -> candidate command
+        -> Motion Safety Supervisor
+        -> Nav2 Collision Monitor or base controller
+        -> mobile base
+```
+
+The short version is: Nav2 mainly asks whether a velocity command is safe in
+the current navigation safety zones; this project asks how to build an
+extensible command safety boundary where different predictors, fault handling,
+and offline evaluation share one interface. See
+[`docs/nav2-comparison.md`](docs/nav2-comparison.md) and
+[`docs/design-faq.md`](docs/design-faq.md) for the detailed boundary.
 
 ## Evidence Labels
 
 Documentation uses explicit evidence labels:
 
-- `hardware_validated`: verified in earlier Raspbot learning sessions.
+- `hardware_validated`: verified in an earlier mobile-robot learning setup.
 - `source_inspected`: confirmed by local source inspection.
 - `offline_simulated`: produced by this replay engine and tests.
 - `integration_pending`: designed adapter or validation work not yet completed.
-
-## Raspbot Connection
-
-The Raspbot V2 command boundary behind this project is:
-
-```text
-teleop/custom node
--> /cmd_vel
--> /driver_node
--> motor-driver path
--> wheels
-```
-
-This project uses `/cmd_vel` as a generic ROS2 mobile-base adapter contract
-while keeping the core package runnable as plain Python.
 
 ## Boundaries
 
@@ -248,8 +260,8 @@ while keeping the core package runnable as plain Python.
 
 ## Story
 
-I used the Raspbot V2 learning workspace to identify the command path, camera
-path, data-recording caveats, and dynamic execution boundary. This project
-turns those lessons into a reusable robotics-engineering artifact: typed
-actions, conservative validation, short-horizon risk prediction, and replayable
-episodes.
+The project started from a practical robotics systems question: a high-level
+action is not necessarily the same as the motion a robot will execute. The
+supervisor turns that gap into a reusable engineering boundary with typed
+actions, conservative validation, short-horizon prediction, fault handling,
+and replayable evidence.

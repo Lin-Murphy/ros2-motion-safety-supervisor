@@ -35,10 +35,10 @@ The project does not claim to replace Nav2 planning, costmaps, Collision
 Monitor, a safety-rated controller, or formal safety certification. Its value
 is the software boundary and evidence workflow around prediction models.
 
-## How should I describe the difference in an interview?
+## Technical Summary
 
-> Nav2 provides navigation and runtime velocity filtering. My project focuses
-> on a model-pluggable command safety boundary: candidate actions are checked
-> before execution, predictor outputs and faults are combined conservatively,
-> and every decision can be replayed and evaluated. The two layers are
-> complementary rather than competing implementations.
+Nav2 provides navigation and runtime velocity filtering. This project provides
+a model-pluggable command safety boundary: candidate actions are checked before
+execution, predictor outputs and faults are combined conservatively, and every
+decision can be replayed and evaluated. The two layers are complementary rather
+than competing implementations.

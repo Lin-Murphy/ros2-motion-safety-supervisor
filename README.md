@@ -168,26 +168,16 @@ python -m unittest discover tests
 - `examples/`: replay inputs for safe, risky, and under-observed cases.
 - `benchmarks/research_cases.json`: deterministic research cases with explicit
   distribution splits and reference execution parameters.
-- `docs/`: control-chain evidence, command policy, data model, and validation
-  notes.
+- `docs/`: focused architecture, model, evaluation, integration, limitation,
+  and roadmap documents.
 - `docs/evaluation-benchmark.md`: the V1 case taxonomy and benchmark scope.
-- `docs/reference-execution-model.md`: the independent execution model used for
-  future ground-truth labels.
 - `docs/learned-risk-predictor.md`: learned predictor boundary and seed results.
-- `docs/conservative-fusion.md`: fusion rules and current safety/usability trade-off.
 - `docs/runtime-integration.md`: ROS2 runtime adapter and safe output ownership.
-- `docs/prediction-model.md`: the V1 rollout equations, clearance check, and
-  trace output.
-- `docs/problem-definition.md`: research question, safety metrics, and scope
-  limits.
 - `docs/baseline-limitations.md`: assumptions and expected baseline failures.
-- `docs/reference-execution-model.md`: independent execution model and ground
-  truth role.
 - `docs/nav2-comparison.md`: boundary between this guardrail and Nav2 spatial
   constraints.
 - `docs/model-integration.md`: predictor registry, learned-risk extension, and
   future world-model integration boundary.
-- `docs/ros2-cmd-vel-contract.md`: generic ROS2 mobile-base command boundary.
 - `docs/roadmap.md`: staged extension from base motion to arm and whole-body
   motion safety.
 
@@ -258,7 +248,8 @@ the current navigation safety zones; this project asks how to build an
 extensible command safety boundary where different predictors, fault handling,
 and offline evaluation share one interface. See
 [`docs/nav2-comparison.md`](docs/nav2-comparison.md) and
-[`docs/design-faq.md`](docs/design-faq.md) for the detailed boundary.
+the focused integration notes in `docs/runtime-integration.md` for the
+detailed boundary.
 
 ## Evidence Labels
 

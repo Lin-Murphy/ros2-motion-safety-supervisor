@@ -12,6 +12,7 @@ from typing import Any
 class ReplayEvent:
     index: int
     action_type: str
+    motion_domain: str
     static_decision: str
     predictive_decision: str
     final_decision: str

@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from math import exp
 from typing import Any
 
-from .actions import DriveAction, TypedAction
+from .actions import ArmJointAction, BaseVelocityAction, CompositeMotionAction, TypedAction
 from .policy import Decision
 from .predictor import KinematicRiskPredictor, PredictionResult, PredictedPoint, Scene
 from .reference_execution import ReferenceExecutionModel, ReferenceOutcome
@@ -77,7 +77,15 @@ class LearnedRiskPredictor:
             return PredictionResult(Decision.RISK_UNKNOWN, "scene observation stale or absent", tuple(), None, self._trace(None, "stale_or_absent_observation"))
         if self.state is None:
             return PredictionResult(Decision.RISK_UNKNOWN, "learned predictor is not fitted", tuple(), None, self._trace(None, "model_not_fitted"))
-        if not isinstance(action, DriveAction):
+        if isinstance(action, (ArmJointAction, CompositeMotionAction)):
+            return PredictionResult(
+                Decision.RISK_UNKNOWN,
+                f"learned-risk predictor does not support {action.motion_domain.value} motion",
+                tuple(),
+                None,
+                self._trace(None, "unsupported_motion_domain"),
+            )
+        if not isinstance(action, BaseVelocityAction):
             point = PredictedPoint(0.0, scene.pose.x, scene.pose.y, scene.pose.yaw)
             return PredictionResult(Decision.APPROVED, "non-drive action has no learned motion risk", (point,), None, self._trace(0.0, None))
 
@@ -93,7 +101,7 @@ class LearnedRiskPredictor:
         return PredictionResult(decision, reason, rollout.trajectory, rollout.min_clearance, trace)
 
     def _features(self, scene: Scene, action: TypedAction) -> tuple[float, ...]:
-        if not isinstance(action, DriveAction):
+        if not isinstance(action, BaseVelocityAction):
             return (0.0,) * 7
         rollout = self.kinematic.predict(scene, action)
         predicted_clearance = 1.0 if rollout.min_clearance is None else rollout.min_clearance

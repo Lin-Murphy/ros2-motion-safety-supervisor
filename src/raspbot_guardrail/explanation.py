@@ -24,7 +24,7 @@ def format_explanation(result: GuardedExecutionResult) -> str:
     ]
 
     for event in result.episode.events:
-        lines.append(f"### Event {event.index}: {event.action_type}")
+        lines.append(f"### Event {event.index}: {event.action_type} [{event.motion_domain}]")
         if event.decision_path:
             for step_index, step in enumerate(event.decision_path, start=1):
                 lines.append(

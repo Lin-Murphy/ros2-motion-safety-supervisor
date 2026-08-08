@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import cos, hypot, isfinite, sin
 
-from .actions import DriveAction, TypedAction
+from .actions import ArmJointAction, BaseVelocityAction, CompositeMotionAction, TypedAction
 from .predictor import PredictedPoint, Scene
 
 
@@ -66,7 +66,15 @@ class ReferenceExecutionModel:
                 None,
                 self._trace(action, "missing_pose_or_bounds"),
             )
-        if not isinstance(action, DriveAction):
+        if isinstance(action, (ArmJointAction, CompositeMotionAction)):
+            return ReferenceExecutionResult(
+                ReferenceOutcome.UNKNOWN,
+                tuple(),
+                None,
+                None,
+                self._trace(action, "unsupported_motion_domain"),
+            )
+        if not isinstance(action, BaseVelocityAction):
             point = PredictedPoint(0.0, scene.pose.x, scene.pose.y, scene.pose.yaw)
             return ReferenceExecutionResult(
                 ReferenceOutcome.SAFE,

@@ -50,6 +50,7 @@ class GuardedExecutionResult:
                     {
                         "index": event.index,
                         "action_type": event.action_type,
+                        "motion_domain": event.motion_domain,
                         "static_decision": event.static_decision,
                         "predictive_decision": event.predictive_decision,
                         "final_decision": event.final_decision,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .actions import TypedAction
+from .actions import MotionDomain, TypedAction
 from .safety_decision_engine import SafetyDecisionEngine
 from .episode import Episode, ReplayEvent
 from .faults import Fault
@@ -42,6 +42,7 @@ class ReplayEngine:
             event = ReplayEvent(
                 0,
                 "plan",
+                MotionDomain.PLAN.value,
                 budget.decision.value,
                 Decision.RISK_UNKNOWN.value,
                 budget.decision.value,
@@ -64,6 +65,7 @@ class ReplayEngine:
                     ReplayEvent(
                         index,
                         action.action_type,
+                        action.motion_domain.value,
                         static.decision.value,
                         Decision.RISK_UNKNOWN.value,
                         final.value,
@@ -94,6 +96,7 @@ class ReplayEngine:
                 ReplayEvent(
                     index=index,
                     action_type=action.action_type,
+                    motion_domain=action.motion_domain.value,
                     static_decision=static.decision.value,
                     predictive_decision=Decision.RISK_UNKNOWN.value if predicted is None else predicted.decision.value,
                     final_decision=final.value,

@@ -19,6 +19,7 @@ def write_html_report(path: Path, episode: Episode) -> None:
         "<tr>"
         f"<td>{event.index}</td>"
         f"<td>{escape(event.action_type)}</td>"
+        f"<td>{escape(event.motion_domain)}</td>"
         f"<td>{escape(event.static_decision)}</td>"
         f"<td>{escape(event.predictive_decision)}</td>"
         f"<td>{escape(event.final_decision)}</td>"
@@ -69,6 +70,7 @@ def write_html_report(path: Path, episode: Episode) -> None:
       <tr>
         <th>#</th>
         <th>Action</th>
+        <th>Domain</th>
         <th>Static</th>
         <th>Predictive</th>
         <th>Final</th>
@@ -197,7 +199,7 @@ def _render_prediction_trace(episode: Episode) -> str:
         if not event.model_trace:
             continue
         trace = dumps(event.model_trace, indent=2)
-        chunks.append(f"<h3>Event #{event.index}: {escape(event.action_type)}</h3>")
+        chunks.append(f"<h3>Event #{event.index}: {escape(event.action_type)} [{escape(event.motion_domain)}]</h3>")
         chunks.append(f"<pre>{escape(trace)}</pre>")
     if not chunks:
         return "<p>No predictive model trace was recorded for this episode.</p>"
@@ -209,7 +211,7 @@ def _render_decision_paths(episode: Episode) -> str:
     for event in episode.events:
         if not event.decision_path:
             continue
-        chunks.append(f"<h3>Event #{event.index}: {escape(event.action_type)}</h3>")
+        chunks.append(f"<h3>Event #{event.index}: {escape(event.action_type)} [{escape(event.motion_domain)}]</h3>")
         chunks.append("<ol>")
         for step in event.decision_path:
             stage = escape(step.get("stage", "unknown"))

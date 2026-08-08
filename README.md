@@ -1,6 +1,7 @@
 # ROS2 Motion Safety Supervisor
 
-A modular and fault-aware motion safety supervisor for ROS2 mobile robots.
+A modular and fault-aware motion safety supervisor for ROS2 mobile robots,
+with an action schema that is ready to grow toward mobile manipulators.
 
 This project implements an explicit software boundary between candidate robot
 actions and execution. It turns actions into typed plans, validates them,
@@ -32,7 +33,7 @@ This project asks a narrower engineering question:
 
 ## What It Does
 
-- Parses candidate robot actions into a typed action schema.
+- Parses candidate robot actions into typed base, arm, and composite schemas.
 - Applies static command checks such as duration and speed limits.
 - Predicts a short-horizon 2D trajectory from pose, scene, and candidate action.
 - Rejects commands that collide with obstacles or leave the configured bounds.
@@ -64,6 +65,11 @@ Decisions are deliberately conservative:
 Each replay writes a JSON episode and a standalone HTML report with a 2D
 trajectory view, obstacle markers, final decision, risk trigger, command
 policy, and minimum predicted clearance where available.
+
+The current runnable predictor remains the planar base path. Arm and composite
+actions are structurally validated and recorded with their motion domain, but
+remain `RISK_UNKNOWN` until their dedicated predictors are added. They are not
+converted to `/cmd_vel` commands.
 
 ## Example Outputs
 

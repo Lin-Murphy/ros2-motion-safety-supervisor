@@ -7,7 +7,7 @@ same decision, fault, replay, and evaluation boundaries.
 
 ## Stage 1: Generalize Motion Actions
 
-Status: planned
+Status: complete
 
 Add typed action forms without changing the existing base-command path:
 
@@ -20,6 +20,12 @@ Evidence:
 - one common action validation contract;
 - tests for malformed, over-limit, and mixed action plans;
 - replay events that identify the motion domain.
+
+The implemented schema keeps legacy `DriveAction` and the `"drive"` wire
+format. `BaseVelocityAction`, `ArmJointAction`, and
+`CompositeMotionAction` share static structural validation. Until an arm or
+whole-body predictor is available, arm and composite actions become
+`RISK_UNKNOWN`; they are never implicitly approved by the base predictor.
 
 ## Stage 2: Add Arm Joint-Space Prediction
 
@@ -41,49 +47,43 @@ Evidence:
 - joint-limit and workspace reports;
 - contract tests shared with the base predictor.
 
-## Stage 3: Add a 3D Collision Boundary
+## Stage 3: Add Coordinated Base-and-Arm Motion
 
 Status: planned
 
-Extend the scene representation from planar obstacles to robot and environment
-geometry. The first useful 3D boundary should cover:
-
-- link-to-environment collision;
-- self-collision;
-- base-to-arm collision;
-- end-effector keep-out volumes;
-- swept-volume checks over a short trajectory.
-
-The project should define the adapter boundary and reproducible test cases. It
-does not need to reimplement all of MoveIt's collision engine.
-
-Evidence:
-
-- 3D collision predictor contract;
-- synthetic link and obstacle scenes;
-- collision, clearance, and unknown-state reports;
-- explicit MoveIt integration boundary.
-
-## Stage 4: Whole-Body Motion
-
-Status: planned
-
-Evaluate coordinated actions such as a base moving while the arm changes
-configuration. The supervisor should check the combined state over time rather
-than approving the base and arm independently.
+Evaluate synchronized base velocity and arm joint actions on one timeline. A
+known rejection from either subsystem rejects the composite action; missing or
+unsupported evidence from either subsystem becomes `RISK_UNKNOWN`.
 
 Evidence:
 
 - synchronized base-plus-arm replay episodes;
-- base-arm self-collision cases;
+- per-subsystem and final decision evidence;
 - tests proving that either subsystem can veto the combined action.
+
+## Stage 4: Add a 3D Collision Boundary
+
+Status: planned
+
+Extend the scene representation from planar obstacles to robot and environment
+geometry. The first useful 3D boundary should cover link-to-environment,
+self-collision, base-to-arm collision, end-effector keep-out volumes, and
+short-horizon discrete swept-volume checks. It is a lightweight, testable
+predictor boundary, not a replacement for MoveIt's collision engine.
+
+Evidence:
+
+- synthetic link and obstacle scenes;
+- collision, clearance, and unknown-state reports;
+- explicit MoveIt integration boundary.
 
 ## Stage 5: Learned and Uncertainty-Aware Predictors
 
 Status: planned
 
 Extend the current structured `learned_risk` model with execution features for
-both base and arm motion. Later versions may add:
+both base and arm motion, and normalize replay/event evidence across motion
+domains. Later versions may add:
 
 - confidence estimates;
 - out-of-distribution detection;
@@ -101,33 +101,29 @@ Evidence:
 - false-negative, false-reject, unknown-rate, and latency reports;
 - no test-case leakage into model fitting.
 
-## Stage 6: ROS2 and MoveIt Adapters
+## Optional Stage 6: Minimal ROS2 Smoke Test
 
-Status: in progress
+Status: deferred and non-mainline
 
-Keep the core independent of ROS2 drivers and add adapters at the edge:
+The existing optional `rclpy` node and `/cmd_vel` adapter are sufficient for
+the current design boundary. At most one optional integration test may verify:
 
-- `/cmd_vel` for mobile-base execution;
-- `JointTrajectory` or a MoveIt Servo boundary for arm execution;
-- Nav2 as a navigation source or downstream velocity-safety layer;
-- MoveIt as a planning and collision-checking capability where appropriate.
+```text
+candidate Twist publisher -> MotionSafetySupervisorNode -> safe Twist subscriber
+```
 
-The first optional `rclpy` node boundary now exists in
-`src/raspbot_guardrail/ros2_node.py`. It converts candidate `Twist` messages,
-consumes odometry, publishes a separate safe topic, and writes a replay
-episode. Live graph validation, obstacle-topic input, runtime watchdog
-deployment, and controlled hardware acceptance remain open tasks.
-
-The project remains complementary to Nav2 and MoveIt. It provides a common
-decision, fault, audit, and replay boundary rather than replacing either stack.
+No full ROS2 package, complex launch graph, MoveIt runtime, or hardware
+deployment is part of this roadmap. Nav2 and MoveIt remain external systems
+that may use this supervisor's decision and evidence boundaries.
 
 ## Final Deliverable Boundary
 
 The intended portfolio result is:
 
-- actual delivery: planar base motion, arm joint-space motion, a common safety
-  interface, replay, fault handling, and reproducible evaluation;
-- explicit demonstration: a 3D collision-predictor extension boundary and
-  ROS2/MoveIt adapter design;
+- actual delivery: planar base motion, typed arm and composite actions, arm
+  joint-space prediction, a common safety interface, replay, fault handling,
+  and reproducible evaluation;
+- explicit demonstration: a lightweight 3D collision-predictor extension
+  boundary and optional minimal ROS2 smoke test;
 - outside the claim: a complete industrial whole-body safety system, safety
   certification, or a replacement for Nav2 or MoveIt.

@@ -21,6 +21,15 @@ ROS2 command source / replay input
 The core domain logic remains independent of `rclpy`. ROS2 integration is an
 adapter concern.
 
+## Motion Domains
+
+The action contract distinguishes `base`, `arm`, `composite`, and legacy
+control actions. `DriveAction` remains the backward-compatible base command,
+while `BaseVelocityAction` names the generalized base domain. All actions pass
+the same static validation entry point before prediction. A predictor that does
+not support an action domain must return `RISK_UNKNOWN`; unsupported motion is
+not evidence of safety.
+
 ## Module Responsibilities
 
 | Component | Responsibility | Must not do |

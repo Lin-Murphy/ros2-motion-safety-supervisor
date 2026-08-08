@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from math import cos, hypot, sin
 from typing import Any
 
-from .actions import DriveAction, TypedAction
+from .actions import ArmJointAction, BaseVelocityAction, CompositeMotionAction, TypedAction
 from .policy import Decision
 
 
@@ -71,7 +71,15 @@ class KinematicRiskPredictor:
             return PredictionResult(Decision.RISK_UNKNOWN, "pose or bounds missing", tuple(), None, self._trace(action, scene, risk_trigger="missing_pose_or_bounds"))
         if scene.observation_age_s is None or scene.observation_age_s > scene.max_observation_age_s:
             return PredictionResult(Decision.RISK_UNKNOWN, "scene observation stale or absent", tuple(), None, self._trace(action, scene, risk_trigger="stale_or_absent_observation"))
-        if not isinstance(action, DriveAction):
+        if isinstance(action, (ArmJointAction, CompositeMotionAction)):
+            return PredictionResult(
+                Decision.RISK_UNKNOWN,
+                f"kinematic predictor does not support {action.motion_domain.value} motion",
+                tuple(),
+                None,
+                self._trace(action, scene, risk_trigger="unsupported_motion_domain"),
+            )
+        if not isinstance(action, BaseVelocityAction):
             point = PredictedPoint(0.0, scene.pose.x, scene.pose.y, scene.pose.yaw)
             return PredictionResult(Decision.APPROVED, "non-drive action has no motion risk", (point,), None, self._trace(action, scene, steps=1))
 
@@ -162,9 +170,10 @@ class KinematicRiskPredictor:
                 "max_observation_age_s": scene.max_observation_age_s,
             },
         }
-        if isinstance(action, DriveAction):
+        trace["motion_domain"] = action.motion_domain.value
+        if isinstance(action, BaseVelocityAction):
             trace["input_action"] = {
-                "type": "drive",
+                "type": action.action_type,
                 "vx": action.vx,
                 "vy": action.vy,
                 "wz": action.wz,

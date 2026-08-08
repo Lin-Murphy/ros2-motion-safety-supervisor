@@ -165,6 +165,7 @@ python -m unittest discover tests
 - `src/raspbot_guardrail/report.py`: standalone HTML report generation.
 - `src/raspbot_guardrail/backends/ros2_cmd_vel.py`: ROS2 `/cmd_vel` adapter
   boundary.
+- `src/raspbot_guardrail/ros2_node.py`: optional `rclpy` runtime node boundary.
 - `examples/`: replay inputs for safe, risky, and under-observed cases.
 - `benchmarks/research_cases.json`: deterministic research cases with explicit
   distribution splits and reference execution parameters.
@@ -285,7 +286,7 @@ Documentation uses explicit evidence labels:
 
 - V1 focuses on command-level guardrails, not full autonomy.
 - The predictor is deterministic and interpretable, not a learned world model.
-- V1 dry-run output does not publish live ROS2 topics.
+- The optional ROS2 node is interface-complete but not yet hardware-accepted.
 - Generated decisions are engineering checks, not formal safety certification.
 - Normalized V1 command values are not claimed as calibrated physical
   velocities.

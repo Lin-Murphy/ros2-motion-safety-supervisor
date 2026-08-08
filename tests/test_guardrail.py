@@ -16,6 +16,7 @@ from raspbot_guardrail.predictors.registry import available_predictors, build_pr
 from raspbot_guardrail.report import write_html_report
 from raspbot_guardrail.reference_execution import ReferenceExecutionModel, ReferenceOutcome
 from raspbot_guardrail.replay import ReplayEngine
+from raspbot_guardrail.ros2_node import odometry_to_pose, quaternion_to_yaw, twist_to_action
 from raspbot_guardrail.research_benchmark import generate_expanded_research_benchmark, generate_research_benchmark
 from raspbot_guardrail.research_evaluation import run_research_evaluation
 from raspbot_guardrail.gateway import MotionSafetySupervisor
@@ -452,6 +453,35 @@ class GuardrailTests(unittest.TestCase):
         self.assertEqual(len(published), 1)
         self.assertEqual(published[0].topic, "/safe_cmd_vel")
         self.assertTrue(backend.available())
+
+    def test_ros2_message_conversion_keeps_core_message_agnostic(self) -> None:
+        class Vector:
+            def __init__(self, x=0.0, y=0.0, z=0.0, w=1.0):
+                self.x, self.y, self.z, self.w = x, y, z, w
+
+        class TwistLike:
+            linear = Vector(0.2, -0.1, 0.0)
+            angular = Vector(0.0, 0.0, 0.4)
+
+        action = twist_to_action(TwistLike(), 0.2)
+        self.assertEqual(action.vx, 0.2)
+        self.assertEqual(action.vy, -0.1)
+        self.assertEqual(action.wz, 0.4)
+        self.assertEqual(action.duration_s, 0.2)
+        self.assertAlmostEqual(quaternion_to_yaw(0.0, 0.0, 0.70710678, 0.70710678), 1.5708, places=3)
+
+        class Pose:
+            position = Vector(1.2, -0.4, 0.0)
+            orientation = Vector(0.0, 0.0, 0.0, 1.0)
+
+        class PoseWithCovariance:
+            pose = Pose()
+
+        class OdomLike:
+            pose = PoseWithCovariance()
+
+        pose = odometry_to_pose(OdomLike())
+        self.assertEqual((pose.x, pose.y, pose.yaw), (1.2, -0.4, 0.0))
 
     def test_learned_risk_predictor_uses_common_contract(self) -> None:
         predictor = build_default_learned_predictor()

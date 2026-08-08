@@ -36,7 +36,30 @@ boundaries: ROS2 Humble in the Docker workspace, the chassis bringup, the
 camera `/image_raw` path. Those observations support the generic interfaces in
 this repository.
 
-The supervisor itself is currently interface-validated with injected callbacks.
-It does not yet claim a live ROS2 safety-supervisor node, deployed runtime
-watchdog, or hardware emergency-stop certification. Those require a dedicated
-ROS2 node integration and a controlled acceptance test.
+The supervisor itself is interface-validated with injected callbacks, and the
+repository now includes an optional `rclpy` node boundary. It does not yet
+claim a live ROS2 graph validation, deployed runtime watchdog, or hardware
+emergency-stop certification. Those require a controlled acceptance test.
+
+## Minimal Live Node
+
+The optional `raspbot_guardrail.ros2_node` module provides the first live node
+boundary. It subscribes to a candidate `geometry_msgs/msg/Twist`, consumes
+`nav_msgs/msg/Odometry`, evaluates the command through the existing safety core,
+publishes to a separate safe topic, and writes the resulting episode.
+
+It is intentionally optional: the core package remains runnable without
+`rclpy`. Run it inside a sourced ROS2 environment after installing this package:
+
+```bash
+python -m raspbot_guardrail.ros2_node \
+  --ros-args \
+  -p candidate_topic:=/cmd_vel_candidate \
+  -p safe_topic:=/cmd_vel_safe \
+  -p odom_topic:=/odom
+```
+
+The first node boundary does not yet consume obstacle detections, and the
+default `RISK_UNKNOWN` behaviour applies until a valid odometry pose is
+available. A controlled hardware test is still required before treating it as
+a deployment-ready safety component.

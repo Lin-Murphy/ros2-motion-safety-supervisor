@@ -103,7 +103,7 @@ Evidence:
 
 ## Stage 6: ROS2 and MoveIt Adapters
 
-Status: planned
+Status: in progress
 
 Keep the core independent of ROS2 drivers and add adapters at the edge:
 
@@ -111,6 +111,12 @@ Keep the core independent of ROS2 drivers and add adapters at the edge:
 - `JointTrajectory` or a MoveIt Servo boundary for arm execution;
 - Nav2 as a navigation source or downstream velocity-safety layer;
 - MoveIt as a planning and collision-checking capability where appropriate.
+
+The first optional `rclpy` node boundary now exists in
+`src/raspbot_guardrail/ros2_node.py`. It converts candidate `Twist` messages,
+consumes odometry, publishes a separate safe topic, and writes a replay
+episode. Live graph validation, obstacle-topic input, runtime watchdog
+deployment, and controlled hardware acceptance remain open tasks.
 
 The project remains complementary to Nav2 and MoveIt. It provides a common
 decision, fault, audit, and replay boundary rather than replacing either stack.

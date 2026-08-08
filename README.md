@@ -251,6 +251,27 @@ and offline evaluation share one interface. See
 the focused integration notes in `docs/runtime-integration.md` for the
 detailed boundary.
 
+## Hardware and ROS2 Context
+
+The project was informed by hands-on Raspbot V2 system work. The following
+robot and ROS2 paths were verified during that work:
+
+- SSH, host networking, power status, and the host/container split;
+- ROS2 Humble running in the robot's Docker workspace;
+- `bringup.launch.py` starting the chassis driver;
+- `/cmd_vel` using `geometry_msgs/msg/Twist`;
+- keyboard teleoperation publishing commands that moved the mecanum base;
+- the command path from `/cmd_vel` through the base driver and hardware I2C
+  boundary;
+- camera capture through `/dev/video0` and an `/image_raw` image topic using
+  `sensor_msgs/msg/Image`.
+
+These observations justify the generic ROS2 command and observation boundaries
+used by this repository. They do not mean that this repository's safety
+supervisor is already a live ROS2 node. The current supervisor integration is
+interface-validated; the live node, topic wiring, runtime watchdog deployment,
+and hardware acceptance test remain integration work.
+
 ## Evidence Labels
 
 Documentation uses explicit evidence labels:

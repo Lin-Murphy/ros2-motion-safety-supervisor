@@ -30,7 +30,13 @@ requests a zero-velocity hold and records a structured fault.
 
 ## Evidence Boundary
 
-The current runtime adapter is interface-validated with injected callbacks. It
-does not claim a live ROS2 graph, Raspbot driver validation, or hardware
-emergency-stop certification. Those require a ROS2 environment and a physical
-integration test.
+The underlying Raspbot V2 learning work verified the relevant hardware and ROS2
+boundaries: ROS2 Humble in the Docker workspace, the chassis bringup, the
+`geometry_msgs/msg/Twist` `/cmd_vel` path, the base driver chain, and the
+camera `/image_raw` path. Those observations support the generic interfaces in
+this repository.
+
+The supervisor itself is currently interface-validated with injected callbacks.
+It does not yet claim a live ROS2 safety-supervisor node, deployed runtime
+watchdog, or hardware emergency-stop certification. Those require a dedicated
+ROS2 node integration and a controlled acceptance test.

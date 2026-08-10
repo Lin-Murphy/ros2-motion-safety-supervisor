@@ -198,7 +198,10 @@ def _render_prediction_trace(episode: Episode) -> str:
     for event in episode.events:
         if not event.model_trace:
             continue
-        trace = dumps(event.model_trace, indent=2)
+        trace_payload = dict(event.model_trace)
+        if event.state_trace:
+            trace_payload["state_trace"] = event.state_trace
+        trace = dumps(trace_payload, indent=2)
         chunks.append(f"<h3>Event #{event.index}: {escape(event.action_type)} [{escape(event.motion_domain)}]</h3>")
         chunks.append(f"<pre>{escape(trace)}</pre>")
     if not chunks:

@@ -150,6 +150,8 @@ python -m unittest discover tests
 - `src/raspbot_guardrail/policy.py`: static command validation.
 - `src/raspbot_guardrail/predictor.py`: deterministic short-horizon trajectory
   and risk prediction.
+- `src/raspbot_guardrail/arm_predictor.py`: dependency-light arm joint-space
+  predictor with explicit planar-model assumptions.
 - `src/raspbot_guardrail/reference_execution.py`: independent offline execution
   model for future benchmark ground truth.
 - `src/raspbot_guardrail/learned_risk.py`: experimental structured learned-risk
@@ -179,6 +181,8 @@ python -m unittest discover tests
   and roadmap documents.
 - `docs/evaluation-benchmark.md`: the V1 case taxonomy and benchmark scope.
 - `docs/learned-risk-predictor.md`: learned predictor boundary and seed results.
+- `docs/arm-joint-predictor.md`: arm action, state, rollout, and workspace
+  assumptions.
 - `docs/runtime-integration.md`: ROS2 runtime adapter and safe output ownership.
 - `docs/baseline-limitations.md`: assumptions and expected baseline failures.
 - `docs/nav2-comparison.md`: boundary between this guardrail and Nav2 spatial

@@ -1,0 +1,14 @@
+{
+  "name": "arm_joint_limit",
+  "actions": [
+    {
+      "type": "arm_joint",
+      "command": {
+        "joint_names": ["shoulder", "elbow"],
+        "mode": "position",
+        "values": [1.8, 0.0],
+        "duration_s": 1.0
+      }
+    }
+  ]
+}

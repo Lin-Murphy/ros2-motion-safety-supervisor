@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import cos, hypot, sin
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .actions import ArmJointAction, BaseVelocityAction, CompositeMotionAction, TypedAction
 from .policy import Decision
+
+if TYPE_CHECKING:
+    from .arm_predictor import ArmJointState, PlanarArmModel
 
 
 @dataclass(frozen=True)
@@ -39,6 +42,8 @@ class Scene:
     obstacles: tuple[CircleObstacle, ...]
     observation_age_s: float | None = 0.0
     max_observation_age_s: float = 1.0
+    arm_state: ArmJointState | None = None
+    arm_model: PlanarArmModel | None = None
 
 
 @dataclass(frozen=True)
@@ -56,6 +61,7 @@ class PredictionResult:
     trajectory: tuple[PredictedPoint, ...]
     min_clearance: float | None
     model_trace: dict[str, Any]
+    state_trace: tuple[dict[str, Any], ...] = tuple()
 
 
 class KinematicRiskPredictor:

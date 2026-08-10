@@ -17,6 +17,12 @@ def _build_learned_risk() -> Predictor:
     return build_default_learned_predictor()
 
 
+def _build_arm_joint() -> Predictor:
+    from ..arm_predictor import ArmJointSpacePredictor
+
+    return ArmJointSpacePredictor()
+
+
 def _build_fusion() -> Predictor:
     from ..fusion import ConservativeFusionPredictor
 
@@ -28,6 +34,7 @@ def _build_fusion() -> Predictor:
 _REGISTRY: dict[str, PredictorFactory] = {
     "kinematic": KinematicRiskPredictor,
     "learned_risk": lambda: _build_learned_risk(),
+    "arm_joint": _build_arm_joint,
     "fusion": lambda: _build_fusion(),
 }
 

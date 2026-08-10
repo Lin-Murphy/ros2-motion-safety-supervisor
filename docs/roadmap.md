@@ -29,12 +29,12 @@ whole-body predictor is available, arm and composite actions become
 
 ## Stage 2: Add Arm Joint-Space Prediction
 
-Status: planned
+Status: complete
 
 Add an arm predictor that estimates short-horizon joint states and checks:
 
 - joint position limits;
-- joint velocity and acceleration limits;
+- joint velocity limits;
 - workspace limits;
 - stale or missing joint-state evidence.
 
@@ -46,6 +46,11 @@ Evidence:
 - deterministic arm replay cases;
 - joint-limit and workspace reports;
 - contract tests shared with the base predictor.
+
+The delivered model uses explicit planar serial-link assumptions and writes a
+generic replay `state_trace`. It does not use a URDF, MoveIt, collision
+geometry, acceleration limits, or a trajectory execution adapter. See
+[`arm-joint-predictor.md`](arm-joint-predictor.md).
 
 ## Stage 3: Add Coordinated Base-and-Arm Motion
 

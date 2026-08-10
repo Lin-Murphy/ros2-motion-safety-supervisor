@@ -106,6 +106,7 @@ class ReplayEngine:
                     model_trace=model_trace,
                     decision_path=arbitration.decision_path,
                     faults=[fault_item.to_dict() for fault_item in arbitration.faults],
+                    state_trace=[] if predicted is None else list(predicted.state_trace),
                 )
             )
             if final != Decision.APPROVED:
@@ -124,6 +125,8 @@ class ReplayEngine:
             obstacles=scene.obstacles,
             observation_age_s=scene.observation_age_s,
             max_observation_age_s=scene.max_observation_age_s,
+            arm_state=scene.arm_state,
+            arm_model=scene.arm_model,
         )
 
     def _metadata(self, scene: Scene) -> dict[str, object]:
@@ -143,6 +146,8 @@ class ReplayEngine:
                     {"x": obstacle.x, "y": obstacle.y, "radius": obstacle.radius}
                     for obstacle in scene.obstacles
                 ],
+                "arm_state_present": scene.arm_state is not None,
+                "arm_model_present": scene.arm_model is not None,
             },
         }
         return metadata

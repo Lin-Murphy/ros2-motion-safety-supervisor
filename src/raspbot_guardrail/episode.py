@@ -22,6 +22,7 @@ class ReplayEvent:
     model_trace: dict[str, Any]
     decision_path: list[dict[str, str]] = field(default_factory=list)
     faults: list[dict[str, str]] = field(default_factory=list)
+    state_trace: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)

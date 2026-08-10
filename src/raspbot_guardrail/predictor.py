@@ -4,13 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import cos, hypot, sin
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from .actions import ArmJointAction, BaseVelocityAction, CompositeMotionAction, TypedAction
+from .actions import DriveAction, TypedAction
 from .policy import Decision
-
-if TYPE_CHECKING:
-    from .arm_predictor import ArmJointState, PlanarArmModel
 
 
 @dataclass(frozen=True)
@@ -42,8 +39,6 @@ class Scene:
     obstacles: tuple[CircleObstacle, ...]
     observation_age_s: float | None = 0.0
     max_observation_age_s: float = 1.0
-    arm_state: ArmJointState | None = None
-    arm_model: PlanarArmModel | None = None
 
 
 @dataclass(frozen=True)
@@ -61,7 +56,6 @@ class PredictionResult:
     trajectory: tuple[PredictedPoint, ...]
     min_clearance: float | None
     model_trace: dict[str, Any]
-    state_trace: tuple[dict[str, Any], ...] = tuple()
 
 
 class KinematicRiskPredictor:
@@ -77,15 +71,7 @@ class KinematicRiskPredictor:
             return PredictionResult(Decision.RISK_UNKNOWN, "pose or bounds missing", tuple(), None, self._trace(action, scene, risk_trigger="missing_pose_or_bounds"))
         if scene.observation_age_s is None or scene.observation_age_s > scene.max_observation_age_s:
             return PredictionResult(Decision.RISK_UNKNOWN, "scene observation stale or absent", tuple(), None, self._trace(action, scene, risk_trigger="stale_or_absent_observation"))
-        if isinstance(action, (ArmJointAction, CompositeMotionAction)):
-            return PredictionResult(
-                Decision.RISK_UNKNOWN,
-                f"kinematic predictor does not support {action.motion_domain.value} motion",
-                tuple(),
-                None,
-                self._trace(action, scene, risk_trigger="unsupported_motion_domain"),
-            )
-        if not isinstance(action, BaseVelocityAction):
+        if not isinstance(action, DriveAction):
             point = PredictedPoint(0.0, scene.pose.x, scene.pose.y, scene.pose.yaw)
             return PredictionResult(Decision.APPROVED, "non-drive action has no motion risk", (point,), None, self._trace(action, scene, steps=1))
 
@@ -176,10 +162,9 @@ class KinematicRiskPredictor:
                 "max_observation_age_s": scene.max_observation_age_s,
             },
         }
-        trace["motion_domain"] = action.motion_domain.value
-        if isinstance(action, BaseVelocityAction):
+        if isinstance(action, DriveAction):
             trace["input_action"] = {
-                "type": action.action_type,
+                "type": "drive",
                 "vx": action.vx,
                 "vy": action.vy,
                 "wz": action.wz,

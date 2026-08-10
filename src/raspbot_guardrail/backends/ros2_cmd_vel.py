@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Protocol
 
-from ..actions import BaseVelocityAction, StopAction, TypedAction, WaitAction
+from ..actions import DriveAction, StopAction, TypedAction, WaitAction
 
 
 DEFAULT_CMD_VEL_TOPIC = "/cmd_vel"
@@ -47,7 +47,7 @@ class DryRunCmdVelPublisher:
         self.published_commands.append(command)
 
 
-def to_twist_command(action: BaseVelocityAction, topic: str = DEFAULT_CMD_VEL_TOPIC) -> TwistCommand:
+def to_twist_command(action: DriveAction, topic: str = DEFAULT_CMD_VEL_TOPIC) -> TwistCommand:
     return TwistCommand(
         topic=topic,
         linear_x=action.vx,
@@ -68,7 +68,7 @@ def zero_twist(duration_s: float = 0.2, topic: str = DEFAULT_CMD_VEL_TOPIC) -> T
 
 
 def action_to_twist_commands(action: TypedAction, topic: str = DEFAULT_CMD_VEL_TOPIC) -> tuple[TwistCommand, ...]:
-    if isinstance(action, BaseVelocityAction):
+    if isinstance(action, DriveAction):
         return (to_twist_command(action, topic=topic),)
     if isinstance(action, (StopAction, WaitAction)):
         return (zero_twist(duration_s=action.duration_s, topic=topic),)

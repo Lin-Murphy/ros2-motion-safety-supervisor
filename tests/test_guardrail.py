@@ -2,24 +2,16 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from raspbot_guardrail.actions import (
-    ActionParseError,
-    ArmJointAction,
-    BaseVelocityAction,
-    CompositeMotionAction,
-    DriveAction,
-    MotionDomain,
-    parse_plan,
-)
+from raspbot_guardrail.actions import parse_plan
 from raspbot_guardrail.safety_decision_engine import SafetyDecisionEngine
 from raspbot_guardrail.backends.command import DryRunCommandBackend
 from raspbot_guardrail.backends.ros2_cmd_vel import zero_twist
 from raspbot_guardrail.backends.ros2_runtime import Ros2CmdVelBackend
 from raspbot_guardrail.evaluation import run_evaluation
-from raspbot_guardrail.episode import read_json, write_episode
 from raspbot_guardrail.execution import GuardedCmdVelExecutor
 from raspbot_guardrail.explanation import format_explanation
-from raspbot_guardrail.policy import Decision, PolicyResult, StaticPolicy
+from raspbot_guardrail.policy import Decision
+from raspbot_guardrail.policy import PolicyResult
 from raspbot_guardrail.predictors.registry import available_predictors, build_predictor
 from raspbot_guardrail.report import write_html_report
 from raspbot_guardrail.reference_execution import ReferenceExecutionModel, ReferenceOutcome
@@ -37,122 +29,6 @@ from raspbot_guardrail.scenario import parse_scene
 
 
 class GuardrailTests(unittest.TestCase):
-    def test_drive_action_and_base_velocity_action_keep_base_compatibility(self) -> None:
-        legacy, generalized = parse_plan({
-            "actions": [
-                {"type": "drive", "command": {"vx": 0.2, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}},
-                {"type": "base_velocity", "command": {"vx": 0.1, "vy": 0.1, "wz": 0.2, "duration_s": 1.0}},
-            ]
-        })
-
-        self.assertIsInstance(legacy, DriveAction)
-        self.assertIsInstance(legacy, BaseVelocityAction)
-        self.assertEqual(legacy.action_type, "drive")
-        self.assertEqual(generalized.action_type, "base_velocity")
-        self.assertEqual(legacy.motion_domain, MotionDomain.BASE)
-        self.assertEqual(generalized.motion_domain, MotionDomain.BASE)
-
-    def test_arm_action_is_structurally_valid_but_unknown_to_base_predictor(self) -> None:
-        actions = parse_plan({
-            "actions": [
-                {
-                    "type": "arm_joint",
-                    "command": {
-                        "joint_names": ["shoulder", "elbow"],
-                        "mode": "position",
-                        "values": [0.2, -0.4],
-                        "duration_s": 1.0,
-                    },
-                }
-            ]
-        })
-        scene = parse_scene({
-            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
-            "bounds": {"min_x": -1.0, "max_x": 1.0, "min_y": -1.0, "max_y": 1.0},
-            "observation_age_s": 0.1,
-            "obstacles": [],
-        })
-
-        replay = ReplayEngine().run("arm_unknown", actions, scene)
-        execution = GuardedCmdVelExecutor().execute("arm_unknown", actions, scene)
-
-        self.assertEqual(StaticPolicy().validate_action(actions[0]).decision, Decision.APPROVED)
-        self.assertEqual(replay.final_decision, Decision.RISK_UNKNOWN)
-        self.assertEqual(replay.episode.events[0].motion_domain, MotionDomain.ARM.value)
-        self.assertEqual(replay.episode.events[0].model_trace["risk_trigger"], "unsupported_motion_domain")
-        self.assertEqual(execution.decision, Decision.RISK_UNKNOWN)
-        self.assertEqual(len(execution.published_commands), 1)
-        self.assertEqual(execution.published_commands[0].linear_x, 0.0)
-
-    def test_arm_and_composite_validation_reject_malformed_or_over_limit_actions(self) -> None:
-        with self.assertRaises(ActionParseError):
-            parse_plan({
-                "actions": [
-                    {
-                        "type": "arm_joint",
-                        "command": {"joint_names": ["shoulder"], "mode": "torque", "values": [0.1], "duration_s": 1.0},
-                    }
-                ]
-            })
-
-        malformed_arm = ArmJointAction(("shoulder", "elbow"), "position", (0.1,), 1.0)
-        self.assertEqual(StaticPolicy().validate_action(malformed_arm).decision, Decision.REJECTED)
-
-        composite = parse_plan({
-            "actions": [
-                {
-                    "type": "composite_motion",
-                    "base": {"type": "base_velocity", "command": {"vx": 0.2, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}},
-                    "arm": {
-                        "type": "arm_joint",
-                        "command": {"joint_names": ["shoulder"], "mode": "position", "values": [0.1], "duration_s": 1.0},
-                    },
-                }
-            ]
-        })[0]
-        self.assertIsInstance(composite, CompositeMotionAction)
-        self.assertEqual(StaticPolicy().validate_action(composite).decision, Decision.APPROVED)
-
-        over_limit = CompositeMotionAction(
-            BaseVelocityAction(0.2, 0.0, 0.0, 4.0),
-            ArmJointAction(("shoulder",), "position", (0.1,), 4.0),
-        )
-        self.assertEqual(StaticPolicy().validate_action(over_limit).decision, Decision.REJECTED)
-
-        mismatched = CompositeMotionAction(
-            BaseVelocityAction(0.2, 0.0, 0.0, 1.0),
-            ArmJointAction(("shoulder",), "velocity", (0.1,), 0.5),
-        )
-        self.assertEqual(StaticPolicy().validate_action(mismatched).decision, Decision.REJECTED)
-
-    def test_mixed_plan_records_domains_and_stops_on_arm_unknown(self) -> None:
-        actions = parse_plan({
-            "actions": [
-                {"type": "base_velocity", "command": {"vx": 0.1, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}},
-                {
-                    "type": "arm_joint",
-                    "command": {"joint_names": ["shoulder"], "mode": "velocity", "values": [0.1], "duration_s": 1.0},
-                },
-            ]
-        })
-        scene = parse_scene({
-            "pose": {"x": -0.5, "y": 0.0, "yaw": 0.0},
-            "bounds": {"min_x": -1.0, "max_x": 1.0, "min_y": -1.0, "max_y": 1.0},
-            "observation_age_s": 0.1,
-            "obstacles": [],
-        })
-
-        result = ReplayEngine().run("mixed_domains", actions, scene)
-
-        self.assertEqual(result.final_decision, Decision.RISK_UNKNOWN)
-        self.assertEqual([event.motion_domain for event in result.episode.events], ["base", "arm"])
-        self.assertEqual(result.episode.events[-1].final_decision, Decision.RISK_UNKNOWN.value)
-        with TemporaryDirectory() as directory:
-            path = Path(directory) / "mixed_domains.json"
-            write_episode(path, result.episode)
-            payload = read_json(path)
-        self.assertEqual([event["motion_domain"] for event in payload["events"]], ["base", "arm"])
-
     def test_clear_drive_is_approved(self) -> None:
         actions = parse_plan({
             "actions": [

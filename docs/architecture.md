@@ -21,15 +21,6 @@ ROS2 command source / replay input
 The core domain logic remains independent of `rclpy`. ROS2 integration is an
 adapter concern.
 
-## Motion Domains
-
-The action contract distinguishes `base`, `arm`, `composite`, and legacy
-control actions. `DriveAction` remains the backward-compatible base command,
-while `BaseVelocityAction` names the generalized base domain. All actions pass
-the same static validation entry point before prediction. A predictor that does
-not support an action domain must return `RISK_UNKNOWN`; unsupported motion is
-not evidence of safety.
-
 ## Module Responsibilities
 
 | Component | Responsibility | Must not do |
@@ -74,15 +65,18 @@ The research path is deliberately downstream of the architecture:
 
 ```text
 kinematic baseline
-        -> independent reference execution
-        -> learned action-conditioned predictor
-        -> common benchmark and metrics
+        -> braking-envelope predictor
+        -> independent held-out execution conditions
+        -> common benchmark and false-negative/false-reject metrics
         -> conservative decision policy
 ```
 
-The learned predictor can improve evidence, but it cannot bypass static policy,
-the decision engine, event recording, or the backend hold policy. A future world-model
-predictor must use the same predictor contract and evaluation boundary.
+The braking-envelope predictor is a conservative analytical check, not a
+second simulator: it must be evaluated against independently implemented
+execution conditions whose delay and braking parameters are not its own
+assumptions. Experimental learned predictors may improve evidence later, but
+cannot bypass static policy, the decision engine, event recording, or the
+backend hold policy. A world-model predictor is outside the current roadmap.
 
 ## Non-goals
 

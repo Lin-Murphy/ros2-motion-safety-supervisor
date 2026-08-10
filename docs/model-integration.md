@@ -40,7 +40,7 @@ The returned `PredictionResult` must include:
 - `model_trace`: model name, assumptions, equations or feature summary, and
   risk trigger
 
-## Future Learned Risk Predictor
+## Experimental Learned-Risk Predictor
 
 A small learned predictor can start with replay/synthetic features:
 
@@ -49,19 +49,24 @@ x, y, yaw, vx, vy, wz, duration_s, nearest_obstacle_distance
 -> risk_score
 ```
 
-It should be evaluated against the same manifest as the kinematic predictor.
-The useful comparison is not only accuracy, but also false negatives, false
-positives, and `RISK_UNKNOWN` behaviour.
+It should be evaluated against the same manifest as the kinematic and
+braking-envelope predictors. The useful comparison is not only accuracy, but
+also dangerous false negatives, false rejects, and `RISK_UNKNOWN` behaviour.
 
-## Future World Model
+This remains experimental. It is not a primary project deliverable until the
+project has representative recorded execution data and an explicit held-out
+split. It cannot become a second source of command authority.
 
-An action-conditioned world model would sit behind the same interface:
+## World-Model Boundary (Deferred)
+
+An action-conditioned world model could sit behind the same interface:
 
 ```text
 state_t + action_t -> predicted_state_t+1 / risk_t+1
 ```
 
-For this project, the safe integration path is:
+The interface is documented so that such a model would have a safe integration
+path:
 
 ```text
 observation_t + action_t
@@ -70,8 +75,11 @@ observation_t + action_t
 -> replayable evidence
 ```
 
-The model proposes risk estimates only. It does not bypass the guardrail or
-directly command `/cmd_vel`.
+However, a world model is explicitly outside the current roadmap: synthetic
+replay alone would not justify the data collection, model validation, and
+distribution-shift claims it requires. Any later model would propose risk
+estimates only; it could not bypass the guardrail or directly command
+`/cmd_vel`.
 
 ## CLI Usage
 

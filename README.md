@@ -1,7 +1,6 @@
 # ROS2 Motion Safety Supervisor
 
-A modular and fault-aware motion safety supervisor for ROS2 mobile robots,
-with an action schema that is ready to grow toward mobile manipulators.
+A modular and fault-aware motion safety supervisor for ROS2 mobile robots.
 
 This project implements an explicit software boundary between candidate robot
 actions and execution. It turns actions into typed plans, validates them,
@@ -33,7 +32,7 @@ This project asks a narrower engineering question:
 
 ## What It Does
 
-- Parses candidate robot actions into typed base, arm, and composite schemas.
+- Parses candidate robot actions into a typed action schema.
 - Applies static command checks such as duration and speed limits.
 - Predicts a short-horizon 2D trajectory from pose, scene, and candidate action.
 - Rejects commands that collide with obstacles or leave the configured bounds.
@@ -65,11 +64,6 @@ Decisions are deliberately conservative:
 Each replay writes a JSON episode and a standalone HTML report with a 2D
 trajectory view, obstacle markers, final decision, risk trigger, command
 policy, and minimum predicted clearance where available.
-
-The current runnable predictor remains the planar base path. Arm and composite
-actions are structurally validated and recorded with their motion domain, but
-remain `RISK_UNKNOWN` until their dedicated predictors are added. They are not
-converted to `/cmd_vel` commands.
 
 ## Example Outputs
 
@@ -150,8 +144,6 @@ python -m unittest discover tests
 - `src/raspbot_guardrail/policy.py`: static command validation.
 - `src/raspbot_guardrail/predictor.py`: deterministic short-horizon trajectory
   and risk prediction.
-- `src/raspbot_guardrail/arm_predictor.py`: dependency-light arm joint-space
-  predictor with explicit planar-model assumptions.
 - `src/raspbot_guardrail/reference_execution.py`: independent offline execution
   model for future benchmark ground truth.
 - `src/raspbot_guardrail/learned_risk.py`: experimental structured learned-risk
@@ -181,16 +173,14 @@ python -m unittest discover tests
   and roadmap documents.
 - `docs/evaluation-benchmark.md`: the V1 case taxonomy and benchmark scope.
 - `docs/learned-risk-predictor.md`: learned predictor boundary and seed results.
-- `docs/arm-joint-predictor.md`: arm action, state, rollout, and workspace
-  assumptions.
 - `docs/runtime-integration.md`: ROS2 runtime adapter and safe output ownership.
 - `docs/baseline-limitations.md`: assumptions and expected baseline failures.
 - `docs/nav2-comparison.md`: boundary between this guardrail and Nav2 spatial
   constraints.
 - `docs/model-integration.md`: predictor registry, learned-risk extension, and
   future world-model integration boundary.
-- `docs/roadmap.md`: staged extension from base motion to arm and whole-body
-  motion safety.
+- `docs/roadmap.md`: focused mobile-base roadmap and the braking-envelope
+  evaluation question.
 
 ## Evaluation Benchmark
 
@@ -217,21 +207,24 @@ conservative `fusion`. Future predictors can use the same
 
 ## Development Direction
 
-The planned extension is from planar mobile-base commands to mobile-manipulator
-motion. The delivery order is:
+The project is deliberately focused on **mobile-base velocity safety**. The
+next engineering question is whether an execution-aware braking-envelope
+predictor can reduce dangerous approvals under held-out delay and braking
+changes, without making the supervisor reject an impractical number of safe
+commands.
 
 ```text
-base motion
-    -> arm joint-space motion
-    -> 3D collision boundary
-    -> coordinated base-and-arm motion
-    -> learned and world-model plugins
+candidate /cmd_vel + current base motion + scene
+    -> static validation
+    -> kinematic baseline and braking-envelope prediction
+    -> conservative decision and zero-velocity hold when uncertain
+    -> replayable evaluation against independent execution conditions
 ```
 
-The target is a common safety boundary for heterogeneous motion actions. The
-project will demonstrate the 3D and MoveIt extension interface without claiming
-to be a complete industrial whole-body safety system. See
-[`docs/roadmap.md`](docs/roadmap.md).
+Arm, 3D collision, MoveIt, whole-body motion, and a learned world model are not
+current project deliverables. The predictor interface remains extensible, but
+extensions need a separate problem statement and evidence before they belong in
+this repository. See [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Design FAQ
 

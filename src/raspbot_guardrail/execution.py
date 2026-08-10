@@ -50,14 +50,12 @@ class GuardedExecutionResult:
                     {
                         "index": event.index,
                         "action_type": event.action_type,
-                        "motion_domain": event.motion_domain,
                         "static_decision": event.static_decision,
                         "predictive_decision": event.predictive_decision,
                         "final_decision": event.final_decision,
                         "reason": event.reason,
                         "min_clearance": None if event.min_clearance is None else round(event.min_clearance, 3),
                         "risk_trigger": event.model_trace.get("risk_trigger") if event.model_trace else None,
-                        "state_trace": event.state_trace,
                         "decision_path": event.decision_path,
                         "faults": event.faults,
                     }

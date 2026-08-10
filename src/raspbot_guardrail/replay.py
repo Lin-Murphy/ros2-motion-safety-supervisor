@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .actions import MotionDomain, TypedAction
+from .actions import TypedAction
 from .safety_decision_engine import SafetyDecisionEngine
 from .episode import Episode, ReplayEvent
 from .faults import Fault
@@ -42,7 +42,6 @@ class ReplayEngine:
             event = ReplayEvent(
                 0,
                 "plan",
-                MotionDomain.PLAN.value,
                 budget.decision.value,
                 Decision.RISK_UNKNOWN.value,
                 budget.decision.value,
@@ -65,7 +64,6 @@ class ReplayEngine:
                     ReplayEvent(
                         index,
                         action.action_type,
-                        action.motion_domain.value,
                         static.decision.value,
                         Decision.RISK_UNKNOWN.value,
                         final.value,
@@ -96,7 +94,6 @@ class ReplayEngine:
                 ReplayEvent(
                     index=index,
                     action_type=action.action_type,
-                    motion_domain=action.motion_domain.value,
                     static_decision=static.decision.value,
                     predictive_decision=Decision.RISK_UNKNOWN.value if predicted is None else predicted.decision.value,
                     final_decision=final.value,
@@ -106,7 +103,6 @@ class ReplayEngine:
                     model_trace=model_trace,
                     decision_path=arbitration.decision_path,
                     faults=[fault_item.to_dict() for fault_item in arbitration.faults],
-                    state_trace=[] if predicted is None else list(predicted.state_trace),
                 )
             )
             if final != Decision.APPROVED:
@@ -125,8 +121,6 @@ class ReplayEngine:
             obstacles=scene.obstacles,
             observation_age_s=scene.observation_age_s,
             max_observation_age_s=scene.max_observation_age_s,
-            arm_state=scene.arm_state,
-            arm_model=scene.arm_model,
         )
 
     def _metadata(self, scene: Scene) -> dict[str, object]:
@@ -146,8 +140,6 @@ class ReplayEngine:
                     {"x": obstacle.x, "y": obstacle.y, "radius": obstacle.radius}
                     for obstacle in scene.obstacles
                 ],
-                "arm_state_present": scene.arm_state is not None,
-                "arm_model_present": scene.arm_model is not None,
             },
         }
         return metadata

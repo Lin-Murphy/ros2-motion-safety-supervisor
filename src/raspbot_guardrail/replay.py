@@ -121,6 +121,8 @@ class ReplayEngine:
             obstacles=scene.obstacles,
             observation_age_s=scene.observation_age_s,
             max_observation_age_s=scene.max_observation_age_s,
+            base_motion=scene.base_motion,
+            expected_command_delay_s=scene.expected_command_delay_s,
         )
 
     def _metadata(self, scene: Scene) -> dict[str, object]:
@@ -140,6 +142,15 @@ class ReplayEngine:
                     {"x": obstacle.x, "y": obstacle.y, "radius": obstacle.radius}
                     for obstacle in scene.obstacles
                 ],
+                "observation_age_s": scene.observation_age_s,
+                "max_observation_age_s": scene.max_observation_age_s,
+                "base_motion": None if scene.base_motion is None else {
+                    "linear_x": scene.base_motion.linear_x,
+                    "linear_y": scene.base_motion.linear_y,
+                    "angular_z": scene.base_motion.angular_z,
+                    "timestamp_s": scene.base_motion.timestamp_s,
+                },
+                "expected_command_delay_s": scene.expected_command_delay_s,
             },
         }
         return metadata

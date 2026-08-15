@@ -12,11 +12,12 @@ from raspbot_guardrail.execution import GuardedCmdVelExecutor
 from raspbot_guardrail.explanation import format_explanation
 from raspbot_guardrail.policy import Decision
 from raspbot_guardrail.policy import PolicyResult
+from raspbot_guardrail.predictor import KinematicRiskPredictor
 from raspbot_guardrail.predictors.registry import available_predictors, build_predictor
 from raspbot_guardrail.report import write_html_report
 from raspbot_guardrail.reference_execution import ReferenceExecutionModel, ReferenceOutcome
 from raspbot_guardrail.replay import ReplayEngine
-from raspbot_guardrail.ros2_node import odometry_to_pose, quaternion_to_yaw, twist_to_action
+from raspbot_guardrail.ros2_node import odometry_to_base_motion, odometry_to_pose, quaternion_to_yaw, twist_to_action
 from raspbot_guardrail.research_benchmark import generate_expanded_research_benchmark, generate_research_benchmark
 from raspbot_guardrail.research_evaluation import run_research_evaluation
 from raspbot_guardrail.gateway import MotionSafetySupervisor
@@ -82,6 +83,46 @@ class GuardrailTests(unittest.TestCase):
         result = ReplayEngine().run("unknown", actions, scene)
         self.assertEqual(result.final_decision, Decision.RISK_UNKNOWN)
         self.assertEqual(result.episode.events[0].trajectory, [])
+
+    def test_required_base_motion_evidence_fails_closed_when_missing(self) -> None:
+        action = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.2, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}}
+            ]
+        })[0]
+        scene = parse_scene({
+            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [],
+        })
+
+        result = KinematicRiskPredictor(require_base_motion=True).predict(scene, action)
+
+        self.assertEqual(result.decision, Decision.RISK_UNKNOWN)
+        self.assertEqual(result.model_trace["risk_trigger"], "missing_or_unstamped_base_motion")
+
+    def test_base_motion_evidence_is_replayable(self) -> None:
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.0, "vy": 0.0, "wz": 0.0, "duration_s": 0.2}}
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "base_motion": {"linear_x": 0.8, "linear_y": 0.1, "angular_z": 0.3, "timestamp_s": 42.0},
+            "expected_command_delay_s": 0.15,
+            "obstacles": [],
+        })
+
+        result = ReplayEngine().run("high_speed_evidence", actions, scene)
+
+        trace = result.episode.events[0].model_trace
+        self.assertEqual(trace["scene_evidence"]["base_motion"]["linear_x"], 0.8)
+        self.assertEqual(trace["execution_assumptions"]["expected_command_delay_s"], 0.15)
+        self.assertEqual(result.episode.metadata["scene"]["base_motion"]["angular_z"], 0.3)
 
     def test_evaluation_manifest_passes(self) -> None:
         summary = run_evaluation(Path("examples/evaluation_cases.json"))
@@ -477,11 +518,28 @@ class GuardrailTests(unittest.TestCase):
         class PoseWithCovariance:
             pose = Pose()
 
+        class TwistWithCovariance:
+            class twist:
+                linear = Vector(0.6, -0.2, 0.0)
+                angular = Vector(0.0, 0.0, 0.4)
+
+        class Stamp:
+            sec = 12
+            nanosec = 500_000_000
+
+        class Header:
+            stamp = Stamp()
+
         class OdomLike:
             pose = PoseWithCovariance()
+            twist = TwistWithCovariance()
+            header = Header()
 
         pose = odometry_to_pose(OdomLike())
         self.assertEqual((pose.x, pose.y, pose.yaw), (1.2, -0.4, 0.0))
+        motion = odometry_to_base_motion(OdomLike())
+        self.assertEqual((motion.linear_x, motion.linear_y, motion.angular_z), (0.6, -0.2, 0.4))
+        self.assertEqual(motion.timestamp_s, 12.5)
 
     def test_learned_risk_predictor_uses_common_contract(self) -> None:
         predictor = build_default_learned_predictor()

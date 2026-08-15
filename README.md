@@ -35,6 +35,8 @@ This project asks a narrower engineering question:
 - Parses candidate robot actions into a typed action schema.
 - Applies static command checks such as duration and speed limits.
 - Predicts a short-horizon 2D trajectory from pose, scene, and candidate action.
+- Records current base-motion evidence and configured execution-delay assumptions
+  alongside every replay decision.
 - Rejects commands that collide with obstacles or leave the configured bounds.
 - Marks decisions as `RISK_UNKNOWN` when required observation evidence is
   missing.
@@ -179,6 +181,8 @@ python -m unittest discover tests
   constraints.
 - `docs/model-integration.md`: predictor registry, learned-risk extension, and
   future world-model integration boundary.
+- `docs/base-motion-evidence.md`: base-state evidence contract used by the
+  execution-aware predictor path.
 - `docs/roadmap.md`: focused mobile-base roadmap and the braking-envelope
   evaluation question.
 
@@ -204,6 +208,15 @@ The prediction layer is model-pluggable. The registry currently provides an
 interpretable `kinematic` predictor, a structured `learned_risk` predictor, and
 conservative `fusion`. Future predictors can use the same
 `predict(scene, action)` interface.
+
+## Base-Motion Evidence
+
+Scenes can carry the latest observed base velocity (`linear_x`, `linear_y`,
+`angular_z`), its timestamp, and an expected command-delay assumption. The
+current kinematic baseline records this evidence without claiming to model a
+physical stop. Predictors that depend on it must request it explicitly and
+fail closed when it is missing or unstamped. See
+[`docs/base-motion-evidence.md`](docs/base-motion-evidence.md).
 
 ## Development Direction
 

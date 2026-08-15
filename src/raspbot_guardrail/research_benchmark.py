@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from .actions import DriveAction
-from .predictor import Bounds, CircleObstacle, Pose2D, Scene
+from .predictor import BaseMotionState, Bounds, CircleObstacle, Pose2D, Scene
 
 
 @dataclass(frozen=True)
@@ -38,6 +38,8 @@ class ResearchBenchmarkCase:
                 "obstacles": [asdict(obstacle) for obstacle in self.scene.obstacles],
                 "observation_age_s": self.scene.observation_age_s,
                 "max_observation_age_s": self.scene.max_observation_age_s,
+                "base_motion": None if self.scene.base_motion is None else asdict(self.scene.base_motion),
+                "expected_command_delay_s": self.scene.expected_command_delay_s,
             },
             "reference_config": self.reference_config,
         }
@@ -117,7 +119,14 @@ def _case(
         split=split,
         purpose=purpose,
         action=action,
-        scene=Scene(pose, bounds, obstacles, observation_age_s=0.1),
+        scene=Scene(
+            pose,
+            bounds,
+            obstacles,
+            observation_age_s=0.1,
+            base_motion=BaseMotionState(0.0, 0.0, 0.0, timestamp_s=0.0),
+            expected_command_delay_s=reference_config["command_delay_s"],
+        ),
         reference_config=reference_config,
     )
 

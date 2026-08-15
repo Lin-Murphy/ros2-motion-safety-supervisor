@@ -32,7 +32,7 @@ than a claim that the supervisor currently supports every robot morphology.
 
 ## Stage 1: Make Base-Motion Evidence Explicit
 
-Status: planned
+Status: complete
 
 Extend the base observation contract to capture the state that affects a safe
 stop:
@@ -45,9 +45,11 @@ stop:
 
 Evidence:
 
-- replay cases for stale, missing, and high-speed observations;
-- event/report fields that distinguish supplied evidence from assumptions;
-- tests for fail-closed behaviour when a required field is unavailable.
+- `BaseMotionState` with planar velocity and an odometry timestamp;
+- scene/replay trace fields that distinguish supplied evidence from execution
+  assumptions;
+- ROS2 odometry conversion into the same core type;
+- tests for missing required evidence and replayable high-speed evidence.
 
 ## Stage 2: Add a Braking-Envelope Predictor
 

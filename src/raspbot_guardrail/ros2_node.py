@@ -14,7 +14,7 @@ from typing import Any
 from .actions import DriveAction
 from .episode import write_episode
 from .execution import GuardedCmdVelExecutor
-from .predictor import Bounds, Pose2D, Scene
+from .predictor import BaseMotionState, Bounds, Pose2D, Scene
 from .predictors.registry import build_predictor
 from .replay import ReplayEngine
 from .backends.ros2_runtime import Ros2CmdVelBackend
@@ -54,6 +54,19 @@ def odometry_to_pose(message: Any) -> Pose2D:
     )
 
 
+def odometry_to_base_motion(message: Any) -> BaseMotionState:
+    """Convert a nav_msgs/msg/Odometry-like message to base-motion evidence."""
+
+    twist = message.twist.twist
+    stamp = message.header.stamp
+    return BaseMotionState(
+        linear_x=float(twist.linear.x),
+        linear_y=float(twist.linear.y),
+        angular_z=float(twist.angular.z),
+        timestamp_s=float(stamp.sec) + float(stamp.nanosec) * 1e-9,
+    )
+
+
 def _require_ros2() -> tuple[Any, Any, Any, Any]:
     try:
         import rclpy
@@ -80,6 +93,7 @@ def main() -> None:
             self.declare_parameter("predictor", "kinematic")
             self.declare_parameter("command_duration_s", 0.2)
             self.declare_parameter("max_observation_age_s", 0.5)
+            self.declare_parameter("expected_command_delay_s", 0.1)
             self.declare_parameter("event_path", "reports/runtime_episode.json")
             self.declare_parameter("min_x", -2.0)
             self.declare_parameter("max_x", 2.0)
@@ -87,6 +101,7 @@ def main() -> None:
             self.declare_parameter("max_y", 1.2)
 
             self._pose: Pose2D | None = None
+            self._base_motion: BaseMotionState | None = None
             self._odom_time_s: float | None = None
             self._safe_publisher = self.create_publisher(
                 Twist,
@@ -119,8 +134,8 @@ def main() -> None:
 
         def _on_odom(self, message: Any) -> None:
             self._pose = odometry_to_pose(message)
-            stamp = message.header.stamp
-            self._odom_time_s = float(stamp.sec) + float(stamp.nanosec) * 1e-9
+            self._base_motion = odometry_to_base_motion(message)
+            self._odom_time_s = self._base_motion.timestamp_s
 
         def _on_command(self, message: Any) -> None:
             now = self.get_clock().now().nanoseconds * 1e-9
@@ -136,6 +151,8 @@ def main() -> None:
                 obstacles=(),
                 observation_age_s=observation_age,
                 max_observation_age_s=float(self.get_parameter("max_observation_age_s").value),
+                base_motion=self._base_motion,
+                expected_command_delay_s=float(self.get_parameter("expected_command_delay_s").value),
             )
             action = twist_to_action(message, float(self.get_parameter("command_duration_s").value))
             result = self._executor.execute(

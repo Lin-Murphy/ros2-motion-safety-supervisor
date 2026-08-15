@@ -33,12 +33,24 @@ class Bounds:
 
 
 @dataclass(frozen=True)
+class BaseMotionState:
+    """Observed planar base motion supplied with the scene evidence."""
+
+    linear_x: float
+    linear_y: float
+    angular_z: float
+    timestamp_s: float | None
+
+
+@dataclass(frozen=True)
 class Scene:
     pose: Pose2D | None
     bounds: Bounds | None
     obstacles: tuple[CircleObstacle, ...]
     observation_age_s: float | None = 0.0
     max_observation_age_s: float = 1.0
+    base_motion: BaseMotionState | None = None
+    expected_command_delay_s: float | None = None
 
 
 @dataclass(frozen=True)
@@ -61,16 +73,33 @@ class PredictionResult:
 class KinematicRiskPredictor:
     """Predicts short-horizon planar motion from normalized body commands."""
 
-    def __init__(self, dt_s: float = 0.1, robot_radius: float = 0.18, clearance_margin: float = 0.05) -> None:
+    def __init__(
+        self,
+        dt_s: float = 0.1,
+        robot_radius: float = 0.18,
+        clearance_margin: float = 0.05,
+        require_base_motion: bool = False,
+    ) -> None:
         self.dt_s = dt_s
         self.robot_radius = robot_radius
         self.clearance_margin = clearance_margin
+        self.require_base_motion = require_base_motion
 
     def predict(self, scene: Scene, action: TypedAction) -> PredictionResult:
         if scene.pose is None or scene.bounds is None:
             return PredictionResult(Decision.RISK_UNKNOWN, "pose or bounds missing", tuple(), None, self._trace(action, scene, risk_trigger="missing_pose_or_bounds"))
         if scene.observation_age_s is None or scene.observation_age_s > scene.max_observation_age_s:
             return PredictionResult(Decision.RISK_UNKNOWN, "scene observation stale or absent", tuple(), None, self._trace(action, scene, risk_trigger="stale_or_absent_observation"))
+        if self.require_base_motion and (
+            scene.base_motion is None or scene.base_motion.timestamp_s is None
+        ):
+            return PredictionResult(
+                Decision.RISK_UNKNOWN,
+                "base-motion evidence missing or unstamped",
+                tuple(),
+                None,
+                self._trace(action, scene, risk_trigger="missing_or_unstamped_base_motion"),
+            )
         if not isinstance(action, DriveAction):
             point = PredictedPoint(0.0, scene.pose.x, scene.pose.y, scene.pose.yaw)
             return PredictionResult(Decision.APPROVED, "non-drive action has no motion risk", (point,), None, self._trace(action, scene, steps=1))
@@ -142,6 +171,7 @@ class KinematicRiskPredictor:
             "steps": steps,
             "robot_radius": self.robot_radius,
             "clearance_margin": self.clearance_margin,
+            "require_base_motion": self.require_base_motion,
             "risk_trigger": risk_trigger,
             "equations": [
                 "x_next = x + dt * (vx * cos(yaw) - vy * sin(yaw))",
@@ -153,6 +183,7 @@ class KinematicRiskPredictor:
                 "predicted point remains inside configured bounds",
                 "minimum obstacle clearance stays above clearance_margin",
                 "pose and scene observation are present and fresh",
+                "base-motion evidence is present when this predictor requires it",
             ],
             "scene_evidence": {
                 "pose_present": scene.pose is not None,
@@ -160,6 +191,17 @@ class KinematicRiskPredictor:
                 "obstacle_count": len(scene.obstacles),
                 "observation_age_s": scene.observation_age_s,
                 "max_observation_age_s": scene.max_observation_age_s,
+                "base_motion": None if scene.base_motion is None else {
+                    "linear_x": scene.base_motion.linear_x,
+                    "linear_y": scene.base_motion.linear_y,
+                    "angular_z": scene.base_motion.angular_z,
+                    "timestamp_s": scene.base_motion.timestamp_s,
+                },
+            },
+            "execution_assumptions": {
+                "expected_command_delay_s": scene.expected_command_delay_s,
+                "robot_radius": self.robot_radius,
+                "clearance_margin": self.clearance_margin,
             },
         }
         if isinstance(action, DriveAction):

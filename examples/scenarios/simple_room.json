@@ -12,6 +12,13 @@
   },
   "observation_age_s": 0.1,
   "max_observation_age_s": 1.0,
+  "base_motion": {
+    "linear_x": 0.0,
+    "linear_y": 0.0,
+    "angular_z": 0.0,
+    "timestamp_s": 0.0
+  },
+  "expected_command_delay_s": 0.1,
   "obstacles": [
     {
       "x": 0.75,

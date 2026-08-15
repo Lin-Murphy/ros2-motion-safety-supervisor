@@ -50,8 +50,10 @@ This project asks a narrower engineering question:
 
 ## Current Scope
 
-V1 uses a deterministic, interpretable predictor rather than a learned world
-model. It predicts command-level consequences over a short horizon:
+V1 uses deterministic, interpretable predictors rather than a learned world
+model. The kinematic baseline predicts the candidate command trajectory; the
+braking-envelope predictor additionally checks whether observed momentum has
+enough space to stop:
 
 ```text
 pose + scene + candidate action -> predicted trajectory -> risk decision
@@ -104,6 +106,12 @@ Run the red-team example:
 python -m raspbot_guardrail replay examples/plans/collision_risk.json examples/scenarios/simple_room.json --html reports/collision_risk.html
 ```
 
+Run the braking-envelope red-team example:
+
+```bash
+python -m raspbot_guardrail replay examples/plans/stop.json examples/scenarios/braking_momentum_risk.json --predictor braking_envelope --html reports/braking_momentum_risk.html
+```
+
 Run the evaluation suite:
 
 ```bash
@@ -146,6 +154,8 @@ python -m unittest discover tests
 - `src/raspbot_guardrail/policy.py`: static command validation.
 - `src/raspbot_guardrail/predictor.py`: deterministic short-horizon trajectory
   and risk prediction.
+- `src/raspbot_guardrail/braking_predictor.py`: conservative analytical
+  stopping-envelope predictor based on observed base motion.
 - `src/raspbot_guardrail/reference_execution.py`: independent offline execution
   model for future benchmark ground truth.
 - `src/raspbot_guardrail/learned_risk.py`: experimental structured learned-risk
@@ -205,8 +215,9 @@ reject a later action in the same plan.
 ## Model Integration
 
 The prediction layer is model-pluggable. The registry currently provides an
-interpretable `kinematic` predictor, a structured `learned_risk` predictor, and
-conservative `fusion`. Future predictors can use the same
+interpretable `kinematic` predictor, an analytical `braking_envelope`
+predictor, a structured `learned_risk` predictor, and conservative `fusion`.
+Future predictors can use the same
 `predict(scene, action)` interface.
 
 ## Base-Motion Evidence

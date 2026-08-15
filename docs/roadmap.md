@@ -53,7 +53,7 @@ Evidence:
 
 ## Stage 2: Add a Braking-Envelope Predictor
 
-Status: planned
+Status: complete
 
 Add an interpretable predictor that estimates a conservative stopping envelope:
 
@@ -61,10 +61,18 @@ Add an interpretable predictor that estimates a conservative stopping envelope:
 distance before braking + braking distance + margin
 ```
 
-At a minimum, it accounts for current speed, worst-case command delay,
-credible minimum braking deceleration, robot footprint, and scene clearance.
-It returns a normal predictor decision and trace; it never publishes
+The implemented predictor accounts for current speed, configured command delay,
+minimum credible deceleration, robot footprint, and scene clearance. It
+combines the existing candidate-trajectory check with a closed-form stopping
+envelope, returns a normal predictor decision and trace, and never publishes
 `/cmd_vel` itself.
+
+Evidence delivered:
+
+- predictor registry integration and CLI selection via `braking_envelope`;
+- fail-closed tests for missing base-motion evidence;
+- a safe stopping-space test and a baseline-versus-braking red-team test;
+- a replayable `stop` plan and momentum-risk scenario.
 
 The core hypothesis is:
 

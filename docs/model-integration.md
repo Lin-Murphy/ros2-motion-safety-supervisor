@@ -12,16 +12,20 @@ candidate action
 -> replay/evaluation evidence
 ```
 
-## Current Predictor
+## Current Predictors
 
-V1 registers one predictor:
+V1 registers two deterministic predictors:
 
 ```text
 kinematic -> KinematicRiskPredictor
+braking_envelope -> BrakingEnvelopePredictor
 ```
 
-It is deterministic and interpretable. It rolls out a short 2D trajectory and
-checks bounds, obstacle clearance, and observation freshness.
+`kinematic` rolls out a short 2D candidate trajectory and checks bounds,
+obstacle clearance, and observation freshness. `braking_envelope` additionally
+requires observed base motion and a delay assumption, then applies an
+analytical stopping-distance bound. Both remain interpretable and share the
+same decision interface.
 
 ## Predictor Interface
 
@@ -88,6 +92,7 @@ Current commands accept an explicit predictor name:
 ```bash
 python -m raspbot_guardrail replay examples/plans/collision_risk.json examples/scenarios/simple_room.json --predictor kinematic
 python -m raspbot_guardrail evaluate examples/evaluation_cases.json --predictor kinematic
+python -m raspbot_guardrail replay examples/plans/stop.json examples/scenarios/braking_momentum_risk.json --predictor braking_envelope
 ```
 
 Future predictors should be added through the registry, then evaluated through

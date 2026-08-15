@@ -23,6 +23,15 @@ The independent reference execution model and parameterized benchmark will
 make these mismatches explicit. The purpose is to measure when the baseline
 approves an action whose reference outcome is dangerous.
 
+## Braking-Envelope Extension
+
+The `braking_envelope` predictor adds a conservative analytical stopping bound
+from observed base speed, expected command delay, and a configured minimum
+deceleration. It reduces one specific blind spot of the kinematic baseline; it
+does not model wheel slip, changing traction, unobserved obstacles, or angular
+stopping dynamics. Its configuration remains an assumption until calibrated
+against real measurements.
+
 ## Interpretation
 
 A baseline failure does not automatically justify a learned predictor. The

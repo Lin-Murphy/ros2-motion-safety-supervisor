@@ -25,8 +25,15 @@ def _build_fusion() -> Predictor:
         ("learned_risk", _build_learned_risk()),
     ))
 
+
+def _build_braking_envelope() -> Predictor:
+    from ..braking_predictor import BrakingEnvelopePredictor
+
+    return BrakingEnvelopePredictor()
+
 _REGISTRY: dict[str, PredictorFactory] = {
     "kinematic": KinematicRiskPredictor,
+    "braking_envelope": _build_braking_envelope,
     "learned_risk": lambda: _build_learned_risk(),
     "fusion": lambda: _build_fusion(),
 }

@@ -1,0 +1,8 @@
+{
+  "actions": [
+    {
+      "type": "stop",
+      "duration_s": 0.2
+    }
+  ]
+}

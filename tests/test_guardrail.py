@@ -13,6 +13,7 @@ from raspbot_guardrail.explanation import format_explanation
 from raspbot_guardrail.policy import Decision
 from raspbot_guardrail.policy import PolicyResult
 from raspbot_guardrail.predictor import KinematicRiskPredictor
+from raspbot_guardrail.braking_predictor import BrakingEnvelopePredictor
 from raspbot_guardrail.predictors.registry import available_predictors, build_predictor
 from raspbot_guardrail.report import write_html_report
 from raspbot_guardrail.reference_execution import ReferenceExecutionModel, ReferenceOutcome
@@ -159,9 +160,59 @@ class GuardrailTests(unittest.TestCase):
 
     def test_predictor_registry_builds_kinematic_predictor(self) -> None:
         self.assertIn("kinematic", available_predictors())
+        self.assertIn("braking_envelope", available_predictors())
         self.assertIn("learned_risk", available_predictors())
         predictor = build_predictor("kinematic")
         self.assertEqual(type(predictor).__name__, "KinematicRiskPredictor")
+
+    def test_braking_envelope_rejects_momentum_that_baseline_does_not_model(self) -> None:
+        action = parse_plan({"actions": [{"type": "stop", "duration_s": 0.2}]})[0]
+        scene = parse_scene({
+            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "base_motion": {"linear_x": 0.6, "linear_y": 0.0, "angular_z": 0.0, "timestamp_s": 10.0},
+            "expected_command_delay_s": 0.2,
+            "obstacles": [{"x": 0.65, "y": 0.0, "radius": 0.10}],
+        })
+
+        baseline = KinematicRiskPredictor().predict(scene, action)
+        braking = BrakingEnvelopePredictor(minimum_deceleration=0.5).predict(scene, action)
+
+        self.assertEqual(baseline.decision, Decision.APPROVED)
+        self.assertEqual(braking.decision, Decision.REJECTED)
+        self.assertEqual(braking.model_trace["risk_trigger"], "braking_envelope_clearance_below_margin")
+        self.assertAlmostEqual(braking.model_trace["braking_envelope"]["stopping_distance"], 0.48)
+
+    def test_braking_envelope_requires_motion_and_delay_evidence(self) -> None:
+        action = parse_plan({"actions": [{"type": "stop", "duration_s": 0.2}]})[0]
+        scene = parse_scene({
+            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [],
+        })
+
+        result = BrakingEnvelopePredictor().predict(scene, action)
+
+        self.assertEqual(result.decision, Decision.RISK_UNKNOWN)
+        self.assertEqual(result.model_trace["risk_trigger"], "missing_or_unstamped_base_motion")
+
+    def test_braking_envelope_approves_clear_stopping_space(self) -> None:
+        action = parse_plan({"actions": [{"type": "stop", "duration_s": 0.2}]})[0]
+        scene = parse_scene({
+            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "base_motion": {"linear_x": 0.2, "linear_y": 0.0, "angular_z": 0.0, "timestamp_s": 10.0},
+            "expected_command_delay_s": 0.1,
+            "obstacles": [{"x": 1.2, "y": 0.0, "radius": 0.10}],
+        })
+
+        result = BrakingEnvelopePredictor(minimum_deceleration=0.5).predict(scene, action)
+
+        self.assertEqual(result.decision, Decision.APPROVED)
+        self.assertAlmostEqual(result.model_trace["braking_envelope"]["stopping_distance"], 0.06)
 
     def test_guarded_cmd_vel_dry_run_publishes_approved_drive_and_stop(self) -> None:
         actions = parse_plan({

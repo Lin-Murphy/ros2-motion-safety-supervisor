@@ -103,7 +103,27 @@ reject. The two remaining dangerous approvals are documented limitations under
 combined and velocity-scale shifts, not hidden failures. See
 [`braking-evaluation.md`](braking-evaluation.md).
 
-## Stage 4: Experimental Learned Risk (Only with Data)
+## Stage 4: Record Decision, Dispatch, and Observation Separately
+
+Status: complete
+
+The execution result must preserve the difference between a command the
+supervisor requested, a command the output adapter accepted, and motion that
+was actually observed after dispatch. Adapter acceptance is not treated as
+proof of motor response or a physical stop.
+
+Evidence delivered:
+
+- `execution_evidence` in each execution episode records candidate actions,
+  supervisor decision, requested commands, adapter-accepted commands, backend
+  status, and optional caller-supplied post-dispatch base motion;
+- unavailable or failing backends retain the requested zero-velocity hold while
+  showing that it was not accepted by the adapter;
+- explanation and HTML reports label this boundary explicitly;
+- unit tests cover approval, rejection, backend fault, and a supplied later
+  motion observation.
+
+## Stage 5: Experimental Learned Risk (Only with Data)
 
 Status: deferred
 
@@ -115,7 +135,7 @@ the analytical baselines.
 Low confidence, distribution shift, timeout, exception, or predictor
 disagreement remains `RISK_UNKNOWN` with a zero-velocity hold.
 
-## Stage 5: Minimal ROS2 Smoke Test
+## Stage 6: Minimal ROS2 Smoke Test
 
 Status: integration pending
 

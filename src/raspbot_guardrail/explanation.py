@@ -17,7 +17,7 @@ def format_explanation(result: GuardedExecutionResult) -> str:
         f"- Reason: {result.reason}",
         f"- Predictor: {predictor}",
         f"- Topic: {result.topic}",
-        f"- Dry-run commands: {len(result.published_commands)}",
+        f"- Backend-accepted commands: {len(result.published_commands)}",
         "",
         "## Decision Path",
         "",
@@ -49,23 +49,34 @@ def format_explanation(result: GuardedExecutionResult) -> str:
 
     lines.extend(
         [
-            "## Dry-Run Command Policy",
+            "## Execution Evidence",
             "",
         ]
     )
     if result.decision == Decision.APPROVED:
         lines.append(
             "The guardrail approved the action sequence, so the dry-run backend "
-            "emitted motion commands and ensured a final zero-velocity stop."
+            "accepted motion commands and ensured a final zero-velocity stop request."
         )
     else:
         lines.append(
             "The guardrail did not approve the action sequence, so the dry-run "
-            "backend emitted only a zero-velocity hold command."
+            "backend was asked to accept only a zero-velocity hold command."
+        )
+
+    evidence = result.episode.metadata.get("execution_evidence", {})
+    if isinstance(evidence, dict):
+        lines.append(f"- Backend status: {evidence.get('backend_status', 'unknown')}")
+        lines.append(
+            "- Post-execution observation: "
+            f"{evidence.get('post_execution_observation_status', 'not_collected')}"
+        )
+        lines.append(
+            "- Note: backend acceptance does not prove that the physical robot executed or stopped."
         )
 
     lines.append("")
-    lines.append("## Generated Commands")
+    lines.append("## Backend-Accepted Commands")
     lines.append("")
     for index, command in enumerate(result.published_commands):
         lines.append(

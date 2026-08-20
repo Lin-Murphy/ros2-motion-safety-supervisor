@@ -12,7 +12,7 @@ from raspbot_guardrail.execution import GuardedCmdVelExecutor
 from raspbot_guardrail.explanation import format_explanation
 from raspbot_guardrail.policy import Decision
 from raspbot_guardrail.policy import PolicyResult
-from raspbot_guardrail.predictor import KinematicRiskPredictor
+from raspbot_guardrail.predictor import BaseMotionState, KinematicRiskPredictor
 from raspbot_guardrail.braking_predictor import BrakingEnvelopePredictor
 from raspbot_guardrail.braking_benchmark import generate_braking_benchmark
 from raspbot_guardrail.braking_evaluation import run_braking_evaluation
@@ -234,6 +234,12 @@ class GuardrailTests(unittest.TestCase):
         self.assertEqual(result.published_commands[0].topic, "/cmd_vel")
         self.assertEqual(result.published_commands[0].linear_x, 0.2)
         self.assertEqual(result.published_commands[-1].linear_x, 0.0)
+        evidence = result.to_dict()["execution_evidence"]
+        self.assertEqual(evidence["candidate_actions"][0]["type"], "drive")
+        self.assertEqual(len(evidence["requested_safe_commands"]), 2)
+        self.assertEqual(len(evidence["backend_accepted_commands"]), 2)
+        self.assertEqual(evidence["backend_status"], "accepted_by_backend")
+        self.assertEqual(evidence["post_execution_observation_status"], "not_collected")
 
     def test_guarded_cmd_vel_dry_run_holds_rejected_action(self) -> None:
         actions = parse_plan({
@@ -252,6 +258,36 @@ class GuardrailTests(unittest.TestCase):
         self.assertEqual(len(result.published_commands), 1)
         self.assertEqual(result.published_commands[0].linear_x, 0.0)
         self.assertEqual(result.published_commands[0].angular_z, 0.0)
+        evidence = result.to_dict()["execution_evidence"]
+        self.assertEqual(len(evidence["requested_safe_commands"]), 1)
+        self.assertEqual(evidence["requested_safe_commands"][0]["linear_x"], 0.0)
+
+    def test_execution_evidence_records_caller_supplied_post_dispatch_motion(self) -> None:
+        actions = parse_plan({
+            "actions": [
+                {"type": "drive", "command": {"vx": 0.2, "vy": 0.0, "wz": 0.0, "duration_s": 1.0}}
+            ]
+        })
+        scene = parse_scene({
+            "pose": {"x": -0.8, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "obstacles": [],
+        })
+        observed = BaseMotionState(0.05, 0.0, 0.0, timestamp_s=12.0)
+
+        result = GuardedCmdVelExecutor().execute(
+            "observed_execution",
+            actions,
+            scene,
+            observed_base_motion=observed,
+            observed_base_motion_source="test_post_dispatch_odom",
+        )
+
+        evidence = result.episode.metadata["execution_evidence"]
+        self.assertEqual(evidence["post_execution_observation_status"], "reported_by_caller")
+        self.assertEqual(evidence["post_execution_observation"]["linear_x"], 0.05)
+        self.assertEqual(evidence["post_execution_observation_source"], "test_post_dispatch_odom")
 
     def test_guarded_cmd_vel_dry_run_does_not_duplicate_existing_stop(self) -> None:
         actions = parse_plan({
@@ -577,6 +613,11 @@ class GuardrailTests(unittest.TestCase):
 
         self.assertEqual(result.decision, Decision.RISK_UNKNOWN)
         self.assertEqual(result.faults[0]["code"], "backend_exception")
+        evidence = result.to_dict()["execution_evidence"]
+        self.assertEqual(evidence["backend_status"], "backend_exception")
+        self.assertEqual(len(evidence["requested_safe_commands"]), 1)
+        self.assertEqual(evidence["requested_safe_commands"][0]["linear_x"], 0.0)
+        self.assertEqual(evidence["backend_accepted_commands"], [])
 
     def test_ros2_runtime_backend_keeps_core_message_agnostic(self) -> None:
         published = []

@@ -15,6 +15,7 @@ def write_html_report(path: Path, episode: Episode) -> None:
     trajectory_svg = _render_trajectory_svg(episode)
     decision_path_html = _render_decision_paths(episode)
     trace_html = _render_prediction_trace(episode)
+    execution_html = _render_execution_evidence(episode)
     rows = "\n".join(
         "<tr>"
         f"<td>{event.index}</td>"
@@ -63,6 +64,10 @@ def write_html_report(path: Path, episode: Episode) -> None:
   <section class="panel">
     <h2>Prediction Trace</h2>
     {trace_html}
+  </section>
+  <section class="panel">
+    <h2>Execution Evidence</h2>
+    {execution_html}
   </section>
   <table>
     <thead>
@@ -202,6 +207,17 @@ def _render_prediction_trace(episode: Episode) -> str:
     if not chunks:
         return "<p>No predictive model trace was recorded for this episode.</p>"
     return "\n".join(chunks)
+
+
+def _render_execution_evidence(episode: Episode) -> str:
+    evidence = episode.metadata.get("execution_evidence")
+    if not isinstance(evidence, dict):
+        return "<p>Replay-only report: no backend dispatch or post-execution observation was collected.</p>"
+    payload = dumps(evidence, indent=2)
+    return (
+        "<p>Backend acceptance is adapter-level evidence only; it does not confirm physical execution or stopping.</p>"
+        f"<pre>{escape(payload)}</pre>"
+    )
 
 
 def _render_decision_paths(episode: Episode) -> str:

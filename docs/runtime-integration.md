@@ -28,6 +28,11 @@ The supervisor is the only component that should publish the final safe command
 topic. A backend failure, stale command, stale odometry, or predictor fault
 requests a zero-velocity hold and records a structured fault.
 
+Episode metadata distinguishes a requested command from adapter-level command
+acceptance. Neither proves motor response or a physical stop: a later base
+motion observation must be supplied separately, otherwise that field remains
+`not_collected`.
+
 ## Evidence Boundary
 
 The underlying Raspbot V2 learning work verified the relevant hardware and ROS2

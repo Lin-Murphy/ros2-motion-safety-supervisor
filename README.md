@@ -41,6 +41,8 @@ This project asks a narrower engineering question:
 - Marks decisions as `RISK_UNKNOWN` when required observation evidence is
   missing.
 - Converts approved actions to generic `/cmd_vel`-style dry-run commands.
+- Separates requested safe commands, adapter-level acceptance, and later
+  observed motion in execution evidence.
 - Evaluates the guardrail against a deterministic 10-case regression benchmark
   and a 100-case research benchmark with held-out execution and scene shifts.
 - Writes replayable JSON episodes, prediction traces, and standalone HTML
@@ -204,6 +206,8 @@ python -m unittest discover tests
   future world-model integration boundary.
 - `docs/base-motion-evidence.md`: base-state evidence contract used by the
   execution-aware predictor path.
+- `docs/execution-evidence.md`: candidate-to-dispatch-to-observation evidence
+  contract and failure semantics.
 - `docs/braking-evaluation.md`: held-out stop-execution protocol, controlled
   comparison, and interpretation boundary.
 - `docs/roadmap.md`: focused mobile-base roadmap and the braking-envelope

@@ -82,12 +82,12 @@ The core hypothesis is:
 
 ## Stage 3: Use Independent Held-Out Execution Conditions
 
-Status: planned
+Status: complete
 
-The predictor must not be evaluated with the same dynamics and parameters it
-uses to make decisions. The evaluation harness will use a separately
-implemented execution model and hold out ranges of delay, acceleration,
-deceleration, and velocity scale.
+The predictor is not evaluated with the same dynamics and parameters it uses
+to make decisions. The evaluation harness uses a separately implemented,
+discrete delayed-deceleration execution model and holds out delay,
+deceleration, and velocity-scale settings.
 
 Measure:
 
@@ -97,9 +97,11 @@ Measure:
 - `RISK_UNKNOWN` rate and reason;
 - decision latency and coverage over the scenario split.
 
-If the braking-envelope predictor does not improve the first metric under this
-protocol, it should remain a small baseline experiment rather than become a
-large subsystem.
+Current controlled result: among 6 dangerous stop cases, the kinematic baseline
+has 6 dangerous false negatives; the braking envelope has 2, with 1 false
+reject. The two remaining dangerous approvals are documented limitations under
+combined and velocity-scale shifts, not hidden failures. See
+[`braking-evaluation.md`](braking-evaluation.md).
 
 ## Stage 4: Experimental Learned Risk (Only with Data)
 

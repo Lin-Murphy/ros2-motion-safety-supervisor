@@ -14,6 +14,8 @@ from raspbot_guardrail.policy import Decision
 from raspbot_guardrail.policy import PolicyResult
 from raspbot_guardrail.predictor import KinematicRiskPredictor
 from raspbot_guardrail.braking_predictor import BrakingEnvelopePredictor
+from raspbot_guardrail.braking_benchmark import generate_braking_benchmark
+from raspbot_guardrail.braking_evaluation import run_braking_evaluation
 from raspbot_guardrail.predictors.registry import available_predictors, build_predictor
 from raspbot_guardrail.report import write_html_report
 from raspbot_guardrail.reference_execution import ReferenceExecutionModel, ReferenceOutcome
@@ -382,6 +384,45 @@ class GuardrailTests(unittest.TestCase):
         self.assertEqual(result.outcome, ReferenceOutcome.COLLISION)
         self.assertIsNotNone(result.failure_time_s)
         self.assertLess(result.min_clearance, 0.0)
+
+    def test_reference_execution_integrates_delayed_stop_from_observed_motion(self) -> None:
+        action = parse_plan({"actions": [{"type": "stop", "duration_s": 0.2}]})[0]
+        scene = parse_scene({
+            "pose": {"x": 0.0, "y": 0.0, "yaw": 0.0},
+            "bounds": {"min_x": -2.0, "max_x": 2.0, "min_y": -1.0, "max_y": 1.0},
+            "observation_age_s": 0.1,
+            "base_motion": {"linear_x": 0.6, "linear_y": 0.0, "angular_z": 0.0, "timestamp_s": 10.0},
+            "expected_command_delay_s": 0.1,
+            "obstacles": [{"x": 0.55, "y": 0.0, "radius": 0.10}],
+        })
+
+        result = ReferenceExecutionModel(
+            dt_s=0.05,
+            command_delay_s=0.2,
+            max_linear_deceleration=0.5,
+        ).execute(scene, action)
+
+        self.assertEqual(result.outcome, ReferenceOutcome.COLLISION)
+        self.assertGreater(result.trajectory[0].x, 0.0)
+        self.assertEqual(result.model_trace["max_linear_deceleration"], 0.5)
+
+    def test_braking_benchmark_compares_held_out_execution_conditions(self) -> None:
+        first = generate_braking_benchmark()
+        second = generate_braking_benchmark()
+        summary = run_braking_evaluation(first)
+
+        self.assertEqual(first, second)
+        self.assertEqual(len(first), 12)
+        self.assertEqual(
+            {case.split for case in first},
+            {"nominal", "held_out_delay", "held_out_deceleration", "held_out_combined", "held_out_velocity_scale"},
+        )
+        self.assertEqual(summary.total, 12)
+        self.assertGreater(summary.metrics["kinematic"].dangerous_false_negatives, 0)
+        self.assertLess(
+            summary.metrics["braking_envelope"].dangerous_false_negatives,
+            summary.metrics["kinematic"].dangerous_false_negatives,
+        )
 
     def test_research_benchmark_has_deterministic_splits(self) -> None:
         first = generate_research_benchmark()

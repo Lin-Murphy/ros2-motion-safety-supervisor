@@ -32,6 +32,12 @@ does not model wheel slip, changing traction, unobserved obstacles, or angular
 stopping dynamics. Its configuration remains an assumption until calibrated
 against real measurements.
 
+The held-out stopping benchmark confirms that the envelope still has dangerous
+false negatives under combined delay/deceleration changes and velocity-scale
+mismatch. This is expected evidence of a bounded analytical model, not a
+reason to present it as a physical safety guarantee. See
+[`braking-evaluation.md`](braking-evaluation.md).
+
 ## Interpretation
 
 A baseline failure does not automatically justify a learned predictor. The

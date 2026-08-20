@@ -130,6 +130,13 @@ Run the expanded held-out benchmark:
 python -m raspbot_guardrail research-evaluate --benchmark expanded --predictor learned_risk --json reports/expanded_learned_risk.json --markdown reports/expanded_learned_risk.md
 ```
 
+Compare the kinematic and braking predictors against independently executed
+stop cases:
+
+```powershell
+python -m raspbot_guardrail braking-evaluate --json "$env:TEMP\braking_evaluation.json" --markdown "$env:TEMP\braking_evaluation.md"
+```
+
 Run a generic ROS2 `/cmd_vel` dry run:
 
 ```bash
@@ -156,6 +163,10 @@ python -m unittest discover tests
   and risk prediction.
 - `src/raspbot_guardrail/braking_predictor.py`: conservative analytical
   stopping-envelope predictor based on observed base motion.
+- `src/raspbot_guardrail/braking_benchmark.py`: deterministic held-out stop
+  cases with isolated reference-execution settings.
+- `src/raspbot_guardrail/braking_evaluation.py`: kinematic-versus-braking
+  comparison metrics and report writers.
 - `src/raspbot_guardrail/reference_execution.py`: independent offline execution
   model for future benchmark ground truth.
 - `src/raspbot_guardrail/learned_risk.py`: experimental structured learned-risk
@@ -193,6 +204,8 @@ python -m unittest discover tests
   future world-model integration boundary.
 - `docs/base-motion-evidence.md`: base-state evidence contract used by the
   execution-aware predictor path.
+- `docs/braking-evaluation.md`: held-out stop-execution protocol, controlled
+  comparison, and interpretation boundary.
 - `docs/roadmap.md`: focused mobile-base roadmap and the braking-envelope
   evaluation question.
 
@@ -207,6 +220,13 @@ minimum predicted clearance where available.
 The most important red-team case is `collision_risk_predictive_reject`: the
 candidate action passes static limits, but the predicted trajectory crosses the
 obstacle clearance margin, so the predictive layer rejects it.
+
+The separate braking benchmark evaluates stop commands against an independently
+implemented delayed-deceleration execution model. In its current fixed offline
+cases, the braking envelope reduces dangerous false negatives from 6 to 2 at
+the cost of one false reject. See
+[`docs/braking-evaluation.md`](docs/braking-evaluation.md) for the protocol and
+limitations.
 
 The sequence case is also important: `multi_action_second_step_predictive_reject`
 shows that replay advances the pose after an approved first action and can

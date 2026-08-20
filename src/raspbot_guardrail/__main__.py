@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from .actions import parse_plan
+from .braking_evaluation import run_braking_evaluation, write_braking_evaluation_json, write_braking_evaluation_markdown
 from .episode import read_json, write_episode
 from .evaluation import run_evaluation, write_evaluation_json, write_evaluation_markdown
 from .execution import GuardedCmdVelExecutor, write_execution_json
@@ -40,6 +41,10 @@ def main() -> None:
     research_evaluate.add_argument("--markdown", type=Path, default=Path("reports/research_evaluation.md"))
     research_evaluate.add_argument("--predictor", choices=available_predictors(), default="kinematic")
     research_evaluate.add_argument("--benchmark", choices=("seed", "expanded"), default="seed")
+
+    braking_evaluate = sub.add_parser("braking-evaluate", help="compare kinematic and braking predictors against held-out stop execution")
+    braking_evaluate.add_argument("--json", type=Path, default=Path("reports/braking_evaluation.json"))
+    braking_evaluate.add_argument("--markdown", type=Path, default=Path("reports/braking_evaluation.md"))
 
     dry_run = sub.add_parser("dry-run", help="run guardrail and emit generic ROS2 cmd_vel commands")
     dry_run.add_argument("plan", type=Path)
@@ -103,6 +108,17 @@ def main() -> None:
         print(f"dangerous_false_negatives={summary.dangerous_false_negatives}/{summary.dangerous_cases}")
         print(f"false_rejects={summary.false_rejects}")
         print(f"unknown_rate={summary.unknown_rate:.0%}")
+        print(f"json={args.json}")
+        print(f"markdown={args.markdown}")
+    elif args.command == "braking-evaluate":
+        summary = run_braking_evaluation()
+        write_braking_evaluation_json(args.json, summary)
+        write_braking_evaluation_markdown(args.markdown, summary)
+        for name, metrics in summary.metrics.items():
+            print(
+                f"{name}: dangerous_false_negatives={metrics.dangerous_false_negatives}/"
+                f"{summary.dangerous_cases}, false_rejects={metrics.false_rejects}, unknown={metrics.unknown_cases}"
+            )
         print(f"json={args.json}")
         print(f"markdown={args.markdown}")
     elif args.command == "explain":

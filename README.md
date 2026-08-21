@@ -1,11 +1,31 @@
 # ROS2 Motion Safety Supervisor
 
-A modular and fault-aware motion safety supervisor for ROS2 mobile robots.
+A portfolio-quality, command-level safety boundary for ROS2 mobile robots.
 
 This project implements an explicit software boundary between candidate robot
 actions and execution. It turns actions into typed plans, validates them,
 predicts short-horizon risk, handles missing or failed evidence conservatively,
 and records replayable episodes for debugging and analysis.
+
+## Portfolio Summary
+
+**Problem.** A velocity command can be syntactically valid while still being
+risky because the robot has residual motion, command delay, stale observation,
+or insufficient stopping space.
+
+**Contribution.** This repository makes that boundary explicit: candidate
+commands pass through static policy, interpretable prediction, conservative
+decision logic, and execution evidence before reaching a ROS2 command adapter.
+The main technical contribution is an analytical braking envelope evaluated
+against separately implemented, held-out stop execution conditions.
+
+**Evidence.** The repository contains replayable red-team cases, deterministic
+tests, an independent offline stop benchmark, and a deliberately isolated ROS2
+failure-path smoke-test protocol. It does not claim live hardware safety,
+calibrated physical stopping performance, or certification.
+
+For the full engineering narrative, see
+[`docs/portfolio-case-study.md`](docs/portfolio-case-study.md).
 
 The core pipeline is:
 
@@ -14,7 +34,7 @@ typed action plan
 -> static validation
 -> pluggable prediction model
 -> guardrail decision
--> replay log
+-> request / backend acceptance / later observation evidence
 -> generic ROS2 /cmd_vel adapter boundary
 ```
 
@@ -71,151 +91,55 @@ Each replay writes a JSON episode and a standalone HTML report with a 2D
 trajectory view, obstacle markers, final decision, risk trigger, command
 policy, and minimum predicted clearance where available.
 
-## Example Outputs
+## Evidence Snapshot
 
-- `reports/clear_drive.html`: an approved action in a simple room scenario.
-- `reports/collision_risk.html`: a rejected action with predicted obstacle risk.
-- `reports/unknown_scene.html`: a conservative `RISK_UNKNOWN` decision when
-  required scene evidence is missing.
-- `reports/evaluation.md`: a compact pass/fail report for the V1 guardrail
-  benchmark.
-- `reports/research_evaluation.md`: baseline results against independent
-  reference execution outcomes.
-- `reports/clear_drive_cmd_vel_dry_run.json`: generic `/cmd_vel` dry-run output
-  for an approved action sequence.
-- `reports/collision_risk_cmd_vel_dry_run.json`: generic `/cmd_vel` dry-run
-  output for a rejected action sequence.
-- `reports/collision_risk_explain.md`: human-readable decision path for the
-  collision-risk case.
+| Evidence | Current result | Meaning |
+| --- | --- | --- |
+| Unit suite | 34 deterministic tests | Core policy, prediction, replay, fault, execution-evidence, and ROS2 message-adapter boundaries. |
+| Held-out stop benchmark | Baseline: 6 dangerous false negatives; braking envelope: 2, with 1 false reject | A controlled synthetic comparison against a separately implemented delayed-deceleration execution model. |
+| Execution evidence | Candidate, decision, requested command, adapter acceptance, and optional later motion are separate fields | A successful adapter call is not presented as proof of robot motion or stopping. |
+| ROS2 smoke test | Protocol ready; live run pending | Isolated missing-odometry failure-path check; not a hardware validation. |
 
-## Quick Start
+The two residual braking-benchmark failures (`combined_escape` and
+`velocity_scale_collision`) are retained as visible limitations. They are the
+reason this project does not claim a learned world model or real-world safety
+performance.
 
-Install the local package:
-
-```bash
-python -m pip install -e .
-```
-
-Run the safe example:
-
-```bash
-python -m raspbot_guardrail replay examples/plans/clear_drive.json examples/scenarios/simple_room.json --html reports/clear_drive.html
-```
-
-Run the red-team example:
-
-```bash
-python -m raspbot_guardrail replay examples/plans/collision_risk.json examples/scenarios/simple_room.json --html reports/collision_risk.html
-```
-
-Run the braking-envelope red-team example:
-
-```bash
-python -m raspbot_guardrail replay examples/plans/stop.json examples/scenarios/braking_momentum_risk.json --predictor braking_envelope --html reports/braking_momentum_risk.html
-```
-
-Run the evaluation suite:
-
-```bash
-python -m raspbot_guardrail evaluate examples/evaluation_cases.json --json reports/evaluation.json --markdown reports/evaluation.md
-```
-
-Run the research benchmark against the independent reference execution model:
-
-```bash
-python -m raspbot_guardrail research-evaluate --json reports/research_evaluation.json --markdown reports/research_evaluation.md
-```
-
-Run the expanded held-out benchmark:
-
-```bash
-python -m raspbot_guardrail research-evaluate --benchmark expanded --predictor learned_risk --json reports/expanded_learned_risk.json --markdown reports/expanded_learned_risk.md
-```
-
-Compare the kinematic and braking predictors against independently executed
-stop cases:
+## Reproduce the Core Evidence
 
 ```powershell
-python -m raspbot_guardrail braking-evaluate --json "$env:TEMP\braking_evaluation.json" --markdown "$env:TEMP\braking_evaluation.md"
-```
-
-Run a generic ROS2 `/cmd_vel` dry run:
-
-```bash
-python -m raspbot_guardrail dry-run examples/plans/clear_drive.json examples/scenarios/simple_room.json --output reports/clear_drive_cmd_vel_dry_run.json
-```
-
-Explain a guardrail decision:
-
-```bash
-python -m raspbot_guardrail explain examples/plans/collision_risk.json examples/scenarios/simple_room.json --predictor kinematic --output reports/collision_risk_explain.md
-```
-
-Run tests:
-
-```bash
+python -m pip install -e .
 python -m unittest discover tests
+python -m raspbot_guardrail braking-evaluate --json "$env:TEMP\braking_evaluation.json" --markdown "$env:TEMP\braking_evaluation.md"
+python -m raspbot_guardrail replay examples/plans/stop.json examples/scenarios/braking_momentum_risk.json --predictor braking_envelope --html "$env:TEMP\braking_momentum_risk.html"
 ```
 
-## Repository Map
+The last command generates the momentum-risk red-team report. All outputs are
+offline/replay evidence, not physical robot runs.
 
-- `src/raspbot_guardrail/actions.py`: typed action schema and plan parsing.
-- `src/raspbot_guardrail/policy.py`: static command validation.
-- `src/raspbot_guardrail/predictor.py`: deterministic short-horizon trajectory
-  and risk prediction.
-- `src/raspbot_guardrail/braking_predictor.py`: conservative analytical
-  stopping-envelope predictor based on observed base motion.
-- `src/raspbot_guardrail/braking_benchmark.py`: deterministic held-out stop
-  cases with isolated reference-execution settings.
-- `src/raspbot_guardrail/braking_evaluation.py`: kinematic-versus-braking
-  comparison metrics and report writers.
-- `src/raspbot_guardrail/reference_execution.py`: independent offline execution
-  model for future benchmark ground truth.
-- `src/raspbot_guardrail/learned_risk.py`: experimental structured learned-risk
-  predictor using the common predictor contract.
-- `src/raspbot_guardrail/fusion.py`: conservative multi-predictor decision
-  evidence layer.
-- `src/raspbot_guardrail/watchdog.py`: command freshness, odometry freshness,
-  and command/odom consistency checks.
-- `src/raspbot_guardrail/predictors/`: predictor interface and registry for
-  future learned/world-model predictors.
-- `src/raspbot_guardrail/evaluation.py`: manifest-driven evaluation harness.
-- `src/raspbot_guardrail/execution.py`: guarded executor for generic ROS2
-  `/cmd_vel` dry runs.
-- `docs/architecture.md`: architecture-first command gateway contracts,
-  responsibilities, and failure semantics.
-- `src/raspbot_guardrail/explanation.py`: human-readable explanation output for
-  guardrail decisions.
-- `src/raspbot_guardrail/replay.py`: replay engine and episode generation.
-- `src/raspbot_guardrail/report.py`: standalone HTML report generation.
-- `src/raspbot_guardrail/backends/ros2_cmd_vel.py`: ROS2 `/cmd_vel` adapter
-  boundary.
-- `src/raspbot_guardrail/ros2_node.py`: optional `rclpy` runtime node boundary.
-- `scripts/ros2_zero_command_smoke.sh`: isolated, zero-output ROS2 adapter
-  smoke test for a sourced robot environment.
-- `examples/`: replay inputs for safe, risky, and under-observed cases.
-- `benchmarks/research_cases.json`: deterministic research cases with explicit
-  distribution splits and reference execution parameters.
-- `docs/`: focused architecture, model, evaluation, integration, limitation,
-  and roadmap documents.
-- `docs/evaluation-benchmark.md`: the V1 case taxonomy and benchmark scope.
-- `docs/learned-risk-predictor.md`: learned predictor boundary and seed results.
-- `docs/runtime-integration.md`: ROS2 runtime adapter and safe output ownership.
-- `docs/ros2-smoke-test.md`: controlled isolated ROS2 smoke-test protocol and
-  evidence boundary.
-- `docs/baseline-limitations.md`: assumptions and expected baseline failures.
-- `docs/nav2-comparison.md`: boundary between this guardrail and Nav2 spatial
-  constraints.
-- `docs/model-integration.md`: predictor registry, learned-risk extension, and
-  future world-model integration boundary.
-- `docs/base-motion-evidence.md`: base-state evidence contract used by the
-  execution-aware predictor path.
-- `docs/execution-evidence.md`: candidate-to-dispatch-to-observation evidence
-  contract and failure semantics.
-- `docs/braking-evaluation.md`: held-out stop-execution protocol, controlled
-  comparison, and interpretation boundary.
-- `docs/roadmap.md`: focused mobile-base roadmap and the braking-envelope
-  evaluation question.
+## Portfolio Tour
+
+Read these in order for the shortest complete review:
+
+1. [`docs/portfolio-case-study.md`](docs/portfolio-case-study.md): problem,
+   architecture, results, limitations, and reproducibility.
+2. [`docs/architecture.md`](docs/architecture.md): component responsibilities
+   and fail-closed semantics.
+3. [`docs/braking-evaluation.md`](docs/braking-evaluation.md): independent
+   held-out stop protocol and current result.
+4. [`docs/ros2-smoke-test.md`](docs/ros2-smoke-test.md): safe isolated runtime
+   integration check for a sourced robot environment.
+
+## Repository Layout
+
+```text
+src/raspbot_guardrail/  safety core, predictors, replay, ROS2 adapter
+examples/               reproducible safe and red-team inputs
+tests/                  deterministic unit and integration-boundary tests
+reports/                generated replay and benchmark outputs
+docs/                   four focused public documents
+scripts/                isolated ROS2 smoke test
+```
 
 ## Evaluation Benchmark
 
@@ -242,11 +166,13 @@ reject a later action in the same plan.
 
 ## Model Integration
 
-The prediction layer is model-pluggable. The registry currently provides an
-interpretable `kinematic` predictor, an analytical `braking_envelope`
-predictor, a structured `learned_risk` predictor, and conservative `fusion`.
-Future predictors can use the same
-`predict(scene, action)` interface.
+The prediction layer is model-pluggable. The portfolio claim rests on the
+interpretable `kinematic` baseline and analytical `braking_envelope` predictor.
+The repository also retains experimental `learned_risk` and conservative
+`fusion` paths behind the same `predict(scene, action)` interface, but they are
+not control dependencies or headline results. Any future learned component
+needs representative recorded data and an independent held-out improvement over
+the analytical baseline.
 
 ## Base-Motion Evidence
 
@@ -254,8 +180,7 @@ Scenes can carry the latest observed base velocity (`linear_x`, `linear_y`,
 `angular_z`), its timestamp, and an expected command-delay assumption. The
 current kinematic baseline records this evidence without claiming to model a
 physical stop. Predictors that depend on it must request it explicitly and
-fail closed when it is missing or unstamped. See
-[`docs/base-motion-evidence.md`](docs/base-motion-evidence.md).
+fail closed when it is missing or unstamped.
 
 ## Development Direction
 
@@ -274,9 +199,8 @@ candidate /cmd_vel + current base motion + scene
 ```
 
 Arm, 3D collision, MoveIt, whole-body motion, and a learned world model are not
-current project deliverables. The predictor interface remains extensible, but
-extensions need a separate problem statement and evidence before they belong in
-this repository. See [`docs/roadmap.md`](docs/roadmap.md).
+current project deliverables. Extensions need a separate problem statement and
+evidence before they belong in this repository.
 
 ## Design FAQ
 
@@ -302,10 +226,7 @@ Nav2 planner/controller
 The short version is: Nav2 mainly asks whether a velocity command is safe in
 the current navigation safety zones; this project asks how to build an
 extensible command safety boundary where different predictors, fault handling,
-and offline evaluation share one interface. See
-[`docs/nav2-comparison.md`](docs/nav2-comparison.md) and
-the focused integration notes in `docs/runtime-integration.md` for the
-detailed boundary.
+and offline evaluation share one interface.
 
 ## Hardware and ROS2 Context
 

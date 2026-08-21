@@ -15,6 +15,23 @@ It deliberately configures an odometry topic with no publisher. The expected
 result is `RISK_UNKNOWN` and one zero-velocity hold on an isolated safe topic.
 It does not test robot movement, braking, driver response, or emergency stop.
 
+## Runtime Boundary
+
+The optional node converts `geometry_msgs/msg/Twist` into a typed candidate
+action, consumes `nav_msgs/msg/Odometry` into pose and base-motion evidence,
+and publishes only to a separate safe topic:
+
+```text
+/cmd_vel_candidate -> motion_safety_supervisor -> /cmd_vel_safe -> driver
+                         ^
+                       /odom
+```
+
+The smoke test replaces all three names with isolated topic names and leaves
+its configured odometry topic without a publisher. This proves the
+missing-observation failure path without connecting a candidate command to a
+motor driver.
+
 ## Preconditions
 
 - Run on the Raspberry Pi in a sourced ROS2 environment where `rclpy`,

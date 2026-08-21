@@ -37,6 +37,27 @@ dry-run executor, runtime watchdog, event recorder, and ROS2 `/cmd_vel` boundary
 implement these responsibilities. The research benchmark remains an adapter
 around the same predictor contract.
 
+## Evidence Contract
+
+The safety decision and the execution outcome are deliberately separate:
+
+```text
+observed pose + base motion + scene + candidate action
+        -> policy and predictor decision
+        -> requested safe command or zero hold
+        -> backend-accepted command
+        -> optional later observed base motion
+```
+
+`Scene` owns pose, bounds, obstacles, observation freshness, and optional base
+velocity with its timestamp. The braking envelope additionally requires a
+command-delay assumption. Missing required evidence becomes `RISK_UNKNOWN`.
+
+Execution records candidate actions, decision, requested commands,
+adapter-accepted commands, backend faults, and any later caller-supplied base
+motion. Adapter acceptance proves only that the software callback succeeded;
+it does not prove ROS delivery, motor response, or a physical stop.
+
 ## Decision and Failure Semantics
 
 The gateway has three externally visible decisions:

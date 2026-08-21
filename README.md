@@ -191,6 +191,8 @@ python -m unittest discover tests
 - `src/raspbot_guardrail/backends/ros2_cmd_vel.py`: ROS2 `/cmd_vel` adapter
   boundary.
 - `src/raspbot_guardrail/ros2_node.py`: optional `rclpy` runtime node boundary.
+- `scripts/ros2_zero_command_smoke.sh`: isolated, zero-output ROS2 adapter
+  smoke test for a sourced robot environment.
 - `examples/`: replay inputs for safe, risky, and under-observed cases.
 - `benchmarks/research_cases.json`: deterministic research cases with explicit
   distribution splits and reference execution parameters.
@@ -199,6 +201,8 @@ python -m unittest discover tests
 - `docs/evaluation-benchmark.md`: the V1 case taxonomy and benchmark scope.
 - `docs/learned-risk-predictor.md`: learned predictor boundary and seed results.
 - `docs/runtime-integration.md`: ROS2 runtime adapter and safe output ownership.
+- `docs/ros2-smoke-test.md`: controlled isolated ROS2 smoke-test protocol and
+  evidence boundary.
 - `docs/baseline-limitations.md`: assumptions and expected baseline failures.
 - `docs/nav2-comparison.md`: boundary between this guardrail and Nav2 spatial
   constraints.

@@ -68,3 +68,7 @@ The first node boundary does not yet consume obstacle detections, and the
 default `RISK_UNKNOWN` behaviour applies until a valid odometry pose is
 available. A controlled hardware test is still required before treating it as
 a deployment-ready safety component.
+
+For the first live adapter check, use the isolated zero-command protocol in
+[`ros2-smoke-test.md`](ros2-smoke-test.md). It confirms missing-observation
+failure semantics without publishing to the production driver topic.

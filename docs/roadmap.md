@@ -137,7 +137,7 @@ disagreement remains `RISK_UNKNOWN` with a zero-velocity hold.
 
 ## Stage 6: Minimal ROS2 Smoke Test
 
-Status: integration pending
+Status: protocol ready; live run pending
 
 Keep ROS2 work at the adapter boundary:
 
@@ -146,6 +146,11 @@ Keep ROS2 work at the adapter boundary:
 - separate safe output topic;
 - watchdog fault to zero-velocity hold;
 - a controlled topic-level smoke test before any hardware claim.
+
+An isolated zero-command protocol and script are ready in
+[`ros2-smoke-test.md`](ros2-smoke-test.md). The local Windows environment has
+no sourced ROS2 runtime and the known robot address is currently unreachable,
+so no live graph result is claimed yet.
 
 The test validates wiring and failure semantics, not physical safety or
 certification.

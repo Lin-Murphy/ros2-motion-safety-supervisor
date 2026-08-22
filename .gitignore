@@ -7,3 +7,9 @@ __pycache__/
 .venv/
 venv/
 PERSONAL_NOTES.md
+
+# Keep intentionally curated reports in Git. Local and exploratory outputs do
+# not belong to the public portfolio evidence set.
+reports/local/
+reports/learning_*
+reports/research_evaluation_expanded_*

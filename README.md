@@ -117,6 +117,9 @@ python -m raspbot_guardrail replay examples/plans/stop.json examples/scenarios/b
 The last command generates the momentum-risk red-team report. All outputs are
 offline/replay evidence, not physical robot runs.
 
+Use `%TEMP%` (as above) or `reports/local/` for exploratory output. Only
+deliberately selected, reproducible report artifacts should be committed.
+
 ## Portfolio Tour
 
 Read these in order for the shortest complete review:

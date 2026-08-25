@@ -4,7 +4,7 @@
 - Reason: predicted obstacle collision or low clearance
 - Predictor: kinematic
 - Topic: /cmd_vel
-- Dry-run commands: 1
+- Backend-accepted commands: 1
 
 ## Decision Path
 
@@ -19,10 +19,13 @@ Risk details:
 - clearance_margin: 0.05
 - horizon_s: 2.0
 
-## Dry-Run Command Policy
+## Execution Evidence
 
-The guardrail did not approve the action sequence, so the dry-run backend emitted only a zero-velocity hold command.
+The guardrail did not approve the action sequence, so the dry-run backend was asked to accept only a zero-velocity hold command.
+- Backend status: accepted_by_backend
+- Post-execution observation: not_collected
+- Note: backend acceptance does not prove that the physical robot executed or stopped.
 
-## Generated Commands
+## Backend-Accepted Commands
 
 0. topic=/cmd_vel, linear_x=0.000, linear_y=0.000, angular_z=0.000, duration_s=0.200

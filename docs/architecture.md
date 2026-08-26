@@ -1,6 +1,6 @@
 # Command Gateway Architecture
 
-## Primary Positioning
+## Overview
 
 This project is a modular and fault-aware command gateway for ROS2 mobile
 robots. Predictive models are replaceable components inside the gateway; they
@@ -34,7 +34,7 @@ adapter concern.
 
 The current `ReplayEngine`, `MotionSafetySupervisor`, predictor registry,
 dry-run executor, runtime watchdog, event recorder, and ROS2 `/cmd_vel` boundary
-implement these responsibilities. The research benchmark remains an adapter
+implement these responsibilities. The experimental benchmark remains an adapter
 around the same predictor contract.
 
 ## Evidence Contract
@@ -80,9 +80,9 @@ conditions must be observable and must not silently become approval:
 The exact response may distinguish `REJECTED` from `RISK_UNKNOWN`, but every
 failure path must record a stable reason, component, and fallback action.
 
-## Research Extension Boundary
+## Experimental Extension Boundary
 
-The research path is deliberately downstream of the architecture:
+The experimental path is deliberately downstream of the architecture:
 
 ```text
 kinematic baseline

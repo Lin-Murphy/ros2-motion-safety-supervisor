@@ -1,17 +1,16 @@
 # ROS2 Motion Safety Supervisor
 
-A command-level safety boundary for ROS2 mobile robots. The project checks a
-candidate velocity action before execution, predicts short-horizon risk,
-handles missing evidence conservatively, and records replayable evidence.
+A small safety gate for ROS2 mobile robots. Before a velocity command reaches
+the robot, it can approve the command, reject it, or hold the robot stopped
+when the current state is unsafe or unknown. Every decision can be replayed
+and inspected.
 
 ## Problem
 
-A velocity command can be valid but unsafe when the robot has residual motion,
-command delay, stale observations, or insufficient stopping space. This project
-asks:
-
-> Can a small, interpretable layer reject unsafe or insufficiently observed
-> mobile-base commands before they enter a ROS2 velocity pipeline?
+A velocity command can look valid but still be unsafe when the robot is already
+moving, observations are old, commands are delayed, or there is not enough
+space to stop. This project adds a small, understandable safety layer before
+the command enters the ROS2 pipeline.
 
 ## Pipeline
 
@@ -25,9 +24,9 @@ candidate action / Twist
   -> replay / evaluation report
 ```
 
-Predictors never publish commands directly. The core is ROS2-independent; the
-optional edge node converts ROS2 `Twist` and `Odometry` messages at the
-boundary.
+The prediction modules only provide risk information; they never publish
+commands directly. The safety core does not depend on ROS2. An optional edge
+node converts ROS2 `Twist` and `Odometry` messages at the boundary.
 
 ## Results
 
@@ -35,12 +34,12 @@ boundary.
 | --- | --- | --- |
 | Deterministic test suite | 34/34 passed | Core, replay, faults, execution evidence, and ROS2 message adapters |
 | V1 regression benchmark | 10/10 passed | Offline replay consistency |
-| Held-out stop benchmark | Braking envelope reduces dangerous false negatives from 6 to 2, with 1 false reject | 12 controlled synthetic cases and an independent delayed-stop model |
+| Independent stop benchmark | The braking model reduces missed dangerous stops from 6 to 2, with 1 unnecessary rejection | 12 controlled synthetic cases and a separate delayed-stop model |
 | ROS2 smoke test | Protocol ready; live run pending | Isolated missing-odometry path, not hardware validation |
 
-The braking benchmark still contains two dangerous approvals under combined
-delay/deceleration and velocity-scale shifts. These are reported limitations,
-not hidden failures.
+The benchmark still contains two dangerous approvals when delay, deceleration,
+and velocity scale change together. These are reported limitations, not hidden
+failures.
 
 ## Reproduce
 
@@ -55,12 +54,12 @@ python -m raspbot_guardrail replay examples/plans/stop.json examples/scenarios/b
 Use `%TEMP%` or `reports/local/` for exploratory output. Only selected,
 reproducible evidence belongs in the committed `reports/` set.
 
-## Public Project Tour
+## Documentation
 
-1. [Portfolio case study](docs/portfolio-case-study.md)
-2. [Command-gateway architecture](docs/architecture.md)
-3. [Independent braking evaluation](docs/braking-evaluation.md)
-4. [Isolated ROS2 smoke test](docs/ros2-smoke-test.md)
+1. [Project case study](docs/project-case-study.md)
+2. [System architecture](docs/architecture.md)
+3. [Stop-risk evaluation](docs/braking-evaluation.md)
+4. [ROS2 interface smoke test](docs/ros2-smoke-test.md)
 
 ## Repository Layout
 
@@ -75,28 +74,27 @@ scripts/                isolated ROS2 smoke test
 
 ## Scope
 
-The completed vertical slice is mobile-base command safety: typed actions and
-observations, static policy, interpretable prediction, independent offline
-evaluation, fault-aware decisions, replay, and execution evidence.
+The completed vertical slice focuses on mobile-base command safety: typed
+commands and observations, simple policy checks, interpretable prediction,
+offline evaluation, fault-aware decisions, replay, and execution evidence.
 
 Arm control, 3D collision, MoveIt, whole-body motion, direct motor-driver
 control, a learned world model, safety-rated operation, and formal
 certification are outside this project.
 
-Learned-risk and fusion implementations remain experimental and are not part
-of the main safety claim. Any future learned component needs representative
-recorded data and an independent held-out improvement over the analytical
-baseline.
+The learned-risk and fusion modules are experimental and are not part of the
+main safety claim. A future learned component would need representative data
+and a separate test showing improvement over the analytical baseline.
 
 ## Evidence Boundary
 
 `APPROVED` means the supplied checks passed. `REJECTED` means a known policy or
-risk condition was detected. `RISK_UNKNOWN` means trustworthy safety could not
-be established and requests a zero-velocity hold.
+risk problem was detected. `RISK_UNKNOWN` means there is not enough trustworthy
+evidence, so the system requests a zero-velocity hold.
 
-The repository records requested commands separately from backend-accepted
-commands and later observed motion. Backend acceptance does not prove ROS
-delivery, motor response, physical stopping, or hardware safety.
+The repository records requested commands separately from commands accepted by
+the backend and from later observed motion. Backend acceptance alone does not
+prove ROS delivery, motor response, physical stopping, or hardware safety.
 
 The optional ROS2 node and smoke-test protocol are interface work. The project
 has not claimed live topic validation, calibrated Raspbot braking, emergency

@@ -1,4 +1,4 @@
-"""Raspbot predictive guardrail core package."""
+"""ROS2 motion safety supervisor core package."""
 
 from .policy import Decision
 

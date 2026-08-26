@@ -37,7 +37,7 @@ motor driver.
 - Run on the Raspberry Pi in a sourced ROS2 environment where `rclpy`,
   `geometry_msgs`, and `nav_msgs` import successfully.
 - Start from this repository checkout; the script uses its `src` package.
-- Keep the robot's production driver disconnected from both smoke-test topics.
+- Keep the robot's live driver disconnected from both smoke-test topics.
 - Never remap either smoke-test topic to `/cmd_vel`.
 - Keep the robot stationary. This test should not create a motor command.
 
@@ -82,7 +82,7 @@ evidence, but do not describe them as physical-safety validation.
 
 ## What This Leaves Unverified
 
-- the live production `/cmd_vel` topology;
+- the live robot `/cmd_vel` topology;
 - an actual odometry source and its timestamps;
 - an approved-command path on the robot;
 - motor and braking response;

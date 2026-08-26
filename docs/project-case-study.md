@@ -1,4 +1,4 @@
-# ROS2 Motion Safety Supervisor: Engineering Case Study
+# ROS2 Motion Safety Supervisor: Project Case Study
 
 ## The Problem
 
@@ -14,7 +14,7 @@ Was later robot motion actually observed?
 ```
 
 This project makes those questions explicit for a ROS2 mobile-base command
-pipeline. It is an authored command-safety and evidence architecture, not a
+pipeline. It is a designed command-safety and evidence architecture, not a
 repackaged vendor demo.
 
 ## System Boundary

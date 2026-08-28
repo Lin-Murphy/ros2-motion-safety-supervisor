@@ -99,3 +99,7 @@ prove ROS delivery, motor response, physical stopping, or hardware safety.
 The optional ROS2 node and smoke-test protocol are interface work. The project
 has not claimed live topic validation, calibrated Raspbot braking, emergency
 stop capability, or certification.
+
+## License
+
+MIT License. See [LICENSE](LICENSE).
